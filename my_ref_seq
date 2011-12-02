@@ -1,0 +1,116 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+      ruby #{$0} combined.vcf sorted_ref_gene.txt out.txt
+_____________________________________________________________________________
+      mutant.vcf      output of GATK for mutant
+      wildtype.vcf    output of GATK for wildtype
+      combined.vcf    output of #{$0} (DEFAULT: STDOUT)
+EOF
+
+unless ARGV.length == 3
+  puts usage
+  exit
+end
+
+
+
+combined = File.open(ARGV[0],'r')
+annotation = File.open(ARGV[1],'r')
+outfile = File.new(ARGV[2],'w')
+
+
+line_combined = combined.readline()
+header = line_combined
+locus = []
+
+while line_combined.include?('#')
+  location = line_combined.scan(/##contig=<ID=+\w+/)
+  if !location.empty?()
+    location = location[0].split('=')
+    locus << location[-1]
+  end
+  header += line_combined
+  line_combined = combined.readline()
+
+end
+
+outfile.write(header)
+
+def is_in_range?(num1, num2, distance)
+  dis = (num2-num1).abs
+  dis <= distance
+end
+
+
+line_annotation = annotation.readline()
+a_combined = line_combined.split(" ")
+a_annotation = line_annotation.split(" ")
+
+locus.each do |location|
+  case location
+  when a_annotation[2] && a_combined[0]
+
+    while a_combined[0] == location
+      case
+      when
+
+        a_combined[1] == a_wildtype[1] && a_mutant[5] > a_wildtype[5]
+        combined.write(line_mutant)
+        break if mutant.eof?()
+        line_mutant = mutant.readline()
+        a_mutant = line_mutant.split(" ")
+        break if wildtype.eof?()
+        line_wildtype = wildtype.readline()
+        a_wildtype = line_wildtype.split(" ")
+      when a_mutant[1] == a_wildtype[1] && a_mutant[4] != a_wildtype[4]
+        combined.write(line_mutant)
+        break if mutant.eof?()
+        line_mutant = mutant.readline()
+        a_mutant = line_mutant.split(" ")
+        break if wildtype.eof?()
+        line_wildtype = wildtype.readline()
+        a_wildtype = line_wildtype.split(" ")
+
+      when a_mutant[1] < a_wildtype[1]
+        combined.write(line_mutant)
+        break if mutant.eof?()
+        line_mutant = mutant.readline()
+        a_mutant = line_mutant.split(" ")
+      when a_mutant[1] > a_wildtype[1]
+        break if wildtype.eof?()
+        line_wildtype = wildtype.readline()
+        a_wildtype = line_wildtype.split(" ")
+      else
+        break if wildtype.eof?()
+        line_wildtype = wildtype.readline()
+        a_wildtype = line_wildtype.split(" ")
+        break if mutant.eof?()
+        line_mutant = mutant.readline()
+        a_mutant = line_mutant.split(" ")
+      end
+    end
+
+    while a_wildtype[0] == location
+      break if wildtype.eof?()
+      line_wildtype = wildtype.readline()
+      a_wildtype = line_wildtype.split(" ")
+    end
+
+  when a_annotation[2]
+    while a_annotation[2] == location
+      line_annotation = annotation.readline()
+      a_annotation = line_annotation.split(" ")
+    end
+
+  when a_combined[0]
+    while a_combined[0] == location
+
+      out.write(line_combined+"")
+      line_mutant = mutant.readline()
+      a_mutant = line_mutant.split(" ")
+    end
+  end
+
+
+
+end
