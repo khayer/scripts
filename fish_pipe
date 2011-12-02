@@ -1,0 +1,18 @@
+#!/bin/bash
+
+echo "starting bwa at " `date` > log
+bwa sampe -r '@RG\tID:foo\tSM:bar\tPL:Illumina' ~/indexes/danRer7.fa \
+	<(bwa aln ~/indexes/danRer7.fa ~/Storage/Zebrafish_Storage/FGC0191_s_1_1_TGACCA_sequence.fastq) \
+	 <(bwa aln ~/indexes/danRer7.fa ~/Storage/Zebrafish_Storage/FGC0191_s_1_2_TGACCA_sequence.fastq) \
+	 ~/Storage/Zebrafish_Storage/FGC0191_s_1_1_TGACCA_sequence.fastq \
+	~/Storage/Zebrafish_Storage/FGC0191_s_1_2_TGACCA_sequence.fastq \
+	 | samtools view -Su - | samtools sort -  ~/Storage/Zebrafish_Storage/FGC0191_paired_TGACCA_sequence || exit 1
+echo "starting indexing at " `date` > log
+samtools index  ~/Storage/Zebrafish_Storage/FGC0191_paired_TGACCA_sequence.bam || exit 1
+echo "starting GATK at " `date` > log
+java -jar  ~/programs/GATK/dist/GenomeAnalysisTK.jar -l INFO -R ~/indexes/danRer7.fa -T UnifiedGenotyper \
+	-I ~/Storage/Zebrafish_Storage/FGC0191_paired_TGACCA_sequence.bam \
+	-o ~/Storage/Zebrafish_Storage/FGC0191_paired_TGACCA_sequence.vcf \
+	 --genotype_likelihoods_model BOTH \
+	> INFO_GATK || exit 1
+echo "done  " `date` > log

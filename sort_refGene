@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+      ruby #{$0} ref_Gene.txt
+EOF
+
+if ARGV.length != 1
+  puts usage
+  exit
+end
+
+
+#file = File.open(ARGV[0],'r')
+locations = File.open('locus','r')
+sorted = File.new('sorted', 'w')
+
+while !locations.eof?
+  position = locations.readline().chomp()
+  `grep -w #{position} #{ARGV[0]} | sort -k 1,1 -k 5,5 > tmp`
+  tmp = File.open('tmp', 'r')
+  while !tmp.eof?
+    sorted.write(tmp.readline())
+  end
+end
+

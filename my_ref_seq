@@ -53,7 +53,7 @@ locus.each do |location|
     while a_combined[0] == location
       case
       when
-
+##### CHANGE HERE
         a_combined[1] == a_wildtype[1] && a_mutant[5] > a_wildtype[5]
         combined.write(line_mutant)
         break if mutant.eof?()
