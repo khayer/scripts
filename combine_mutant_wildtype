@@ -1,0 +1,139 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+      #{$0} mutant.vcf wildtype.vcf > combined.vcf
+_____________________________________________________________________________
+      mutant.vcf      output of GATK for mutant
+      wildtype.vcf    output of GATK for wildtype
+      combined.vcf    output of #{$0} (DEFAULT: STDOUT)
+EOF
+
+unless ARGV.length > 1 && ARGV.length < 4
+  puts usage
+  exit
+end
+
+
+mutant = File.open(ARGV[0],'r')
+wildtype = File.open(ARGV[1],'r')
+combined = File.open(ARGV[2],'w')
+
+
+line_mutant = mutant.readline()
+line_wildtype = wildtype.readline()
+
+header = line_mutant
+locus = []
+
+while line_mutant.include?('#')
+  location = line_mutant.scan(/##contig=<ID=+\w+/)
+  if !location.empty?()
+    location = location[0].split('=')
+    locus << location[-1]
+  end
+  header += line_mutant
+  line_mutant = mutant.readline()
+end
+
+locus_file = File.open('locus','w')
+locus_file.write(locus.join("\n"))
+combined.write(header)
+
+while line_wildtype.include?('#')
+  break if wildtype.eof?()
+  line_wildtype = wildtype.readline()
+end
+
+a_mutant = line_mutant.split(" ")
+a_wildtype = line_wildtype.split(" ")
+cut = 100
+
+locus.each do |location|
+  break if mutant.eof?
+  puts location
+  puts a_mutant[0]
+  puts a_wildtype[0]
+  case
+  when a_mutant[0] == location && a_wildtype[0] == location
+    while a_mutant[0] == location && a_wildtype[0] == location
+      case
+      when a_mutant[1] == a_wildtype[1] && (a_mutant[5].to_i > a_wildtype[5].to_i*2)
+        if a_mutant[5].to_i > cut
+          combined.write(line_mutant)
+        end
+        break if mutant.eof?()
+        line_mutant = mutant.readline()
+        a_mutant = line_mutant.split(" ")
+        break if wildtype.eof?()
+        line_wildtype = wildtype.readline()
+        a_wildtype = line_wildtype.split(" ")
+      when a_mutant[1] == a_wildtype[1] && a_mutant[4] != a_wildtype[4]
+        if a_mutant[5].to_i > cut
+          combined.write(line_mutant)
+        end
+        break if mutant.eof?()
+        line_mutant = mutant.readline()
+        a_mutant = line_mutant.split(" ")
+        break if wildtype.eof?()
+        line_wildtype = wildtype.readline()
+        a_wildtype = line_wildtype.split(" ")
+      when a_mutant[1] < a_wildtype[1]
+        if a_mutant[5].to_i > cut
+          combined.write(line_mutant)
+        end
+        break if mutant.eof?()
+        line_mutant = mutant.readline()
+        a_mutant = line_mutant.split(" ")
+      when a_mutant[1] > a_wildtype[1]
+        break if wildtype.eof?()
+        line_wildtype = wildtype.readline()
+        a_wildtype = line_wildtype.split(" ")
+      else
+        break if wildtype.eof?()
+        line_wildtype = wildtype.readline()
+        a_wildtype = line_wildtype.split(" ")
+        break if mutant.eof?()
+        line_mutant = mutant.readline()
+        a_mutant = line_mutant.split(" ")
+      end
+    end
+
+    break if wildtype.eof?()
+    line_wildtype = wildtype.readline()
+    a_wildtype = line_wildtype.split(" ")
+    break if mutant.eof?()
+    line_mutant = mutant.readline()
+    a_mutant = line_mutant.split(" ")
+
+    while a_wildtype[0] == location
+      break if wildtype.eof?()
+      line_wildtype = wildtype.readline()
+      a_wildtype = line_wildtype.split(" ")
+    end
+
+    while a_mutant[0] == location
+      if a_mutant[5].to_i > cut
+        combined.write(line_mutant)
+      end
+      break if mutant.eof?()
+      line_mutant = mutant.readline()
+      a_mutant = line_mutant.split(" ")
+    end
+
+  when a_mutant[0]
+    while a_mutant[0] == location
+      break if mutant.eof?
+      if a_mutant[5].to_i > cut
+        combined.write(line_mutant)
+      end
+      line_mutant = mutant.readline()
+      a_mutant = line_mutant.split(" ")
+    end
+
+  when a_wildtype[0] == location
+    while a_wildtype[0] == location
+      break if wildtype.eof?()
+      line_wildtype = wildtype.readline()
+      a_wildtype = line_wildtype.split(" ")
+    end
+  end
+end

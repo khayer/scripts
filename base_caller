@@ -1,0 +1,95 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+_________________________________________________________________________________________________
+
+      #{$0} mutant_r1.fq mutant_r2.fq wildtype_r1.fq wildtype_r2.fq index_prefix ...
+       ... annotation_file bwa samtools GATK
+_________________________________________________________________________________________________
+
+EOF
+
+
+
+if ARGV.length != 9
+  puts usage
+  exit
+end
+
+mutant_r1 = ARGV[0]
+mutant_r2 = ARGV[1]
+wild_r1 = ARGV[2]
+wild_r2 = ARGV[3]
+index = ARGV[4]
+annotations = ARGV[5]
+bwa = ARGV[6]
+samtools = ARGV[7]
+gatk = ARGV[8]
+
+# BWA
+system(" echo 'starting bwa for mutant at ' `date` >> #{mutant_r1}log")
+system('bash','-c',"#{bwa} sampe -r '@RG\tID:foo\tSM:bar\tPL:Illumina' #{index} \
+        <( #{bwa} aln #{index} #{mutant_r1}) <( #{bwa} aln #{index} #{mutant_r2}) \
+        #{mutant_r1} #{mutant_r2} | samtools view -Su - | samtools sort - #{mutant_r1}")
+system(" echo 'starting bwa for wildtype at ' `date` >> #{mutant_r1}log")
+system('bash', '-c', "#{bwa} sampe -r '@RG\tID:foo\tSM:bar\tPL:Illumina' #{index} \
+        <(#{bwa} aln #{index} #{wild_r1}) <(#{bwa} aln #{index} #{wild_r2}) \
+        #{wild_r1} #{wild_r2} | samtools view -Su - | samtools sort - #{wild_r1}")
+
+
+
+# indexing
+system(" echo 'starting indexing for mutant at ' `date` >> #{mutant_r1}log")
+system(" #{samtools} index #{mutant_r1}.bam")
+system(" echo 'starting indexing for wildtype at ' `date` >> #{mutant_r1}log")
+system(" #{samtools} index #{wild_r1}.bam")
+
+# GATK
+system(" echo 'starting GATK for mutant at ' `date` >> #{mutant_r1}log
+        java -jar  #{gatk} -l INFO -R #{index} -T UnifiedGenotyper \
+        -I #{mutant_r1}.bam \
+        -o #{mutant_r1}.vcf \
+        --genotype_likelihoods_model BOTH \
+        > info_GATK_#{mutant_r1} || exit 1 &
+         echo 'starting GATK for wildtype at ' `date` >> #{mutant_r1}log
+        java -jar  #{gatk} -l INFO -R #{index} -T UnifiedGenotyper \
+        -I #{wild_r1}.bam \
+        -o #{wild_r1}.vcf \
+        --genotype_likelihoods_model BOTH \
+        > info_GATK_#{wild_r1} || exit 1 &
+         wait ")
+
+# create the location index
+locations = File.open("#{mutant_r1}.vcf")
+line = locations.readline()
+
+locus = []
+while line.include?('#')
+  location = line.scan(/##contig=<ID=+\w+/)
+  if !location.empty?()
+    location = location[0].split('=')
+    locus << location[-1]
+  end
+  line = locations.readline()
+end
+
+locations.close()
+locus_file = File.new('locus','w')
+locus_file.write(locus.join("\n"))
+locus_file.close()
+locus = nil
+
+# Sort output
+system(" echo 'starting sorting for mutant at ' `date` >> #{mutant_r1}log")
+system(" sort_vcf #{mutant_r1}.vcf #{mutant_r1}_sorted.vcf locus")
+system(" echo 'starting sorting for wildtype at ' `date` >> #{mutant_r1}log")
+system(" sort_vcf #{wild_r1}.vcf #{wild_r1}_sorted.vcf locus")
+
+# Combining wildtype and mutant
+system(" echo 'starting combining mutant and wildtype at ' `date` >> #{mutant_r1}log")
+system(" combine_mutant_wildtype #{mutant_r1}_sorted.vcf #{wild_r1}_sorted.vcf #{mutant_r1}_filtered.vcf")
+
+# Find annotations
+system(" echo 'sorting annotation file at ' `date` >> #{mutant_r1}log" )
+system(" sort_refGene #{annotations} #{annotations}_sorted locus")
+system(" echo 'starting to annotate the file at ' `date` >> #{mutant_r1}log")
+system(" my_ref_seq #{mutant_r1}_filtered.vcf #{annotations}_sorted > #{mutant_r1}_annotated.vcf")

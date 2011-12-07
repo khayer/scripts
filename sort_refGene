@@ -1,21 +1,21 @@
 #!/usr/bin/env ruby
 usage =<<EOF
-      ruby #{$0} ref_Gene.txt
+      #{$0} ref_Gene.txt sorted_refGene.txt locations
 EOF
 
-if ARGV.length != 1
+if ARGV.length != 3
   puts usage
   exit
 end
 
 
 #file = File.open(ARGV[0],'r')
-locations = File.open('locus','r')
-sorted = File.new('sorted', 'w')
+locations = File.open(ARGV[2],'r')
+sorted = File.open(ARGV[1], 'w')
 
 while !locations.eof?
   position = locations.readline().chomp()
-  `grep -w #{position} #{ARGV[0]} | sort -k 1,1 -k 5,5 > tmp`
+  `grep -w #{position} #{ARGV[0]} | sort -k 5,5 -n > tmp`
   tmp = File.open('tmp', 'r')
   while !tmp.eof?
     sorted.write(tmp.readline())

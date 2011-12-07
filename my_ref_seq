@@ -1,23 +1,22 @@
 #!/usr/bin/env ruby
 usage =<<EOF
-      ruby #{$0} combined.vcf sorted_ref_gene.txt out.txt
+      #{$0} combined.vcf sorted_ref_gene.txt > out.txt
 _____________________________________________________________________________
       mutant.vcf      output of GATK for mutant
-      wildtype.vcf    output of GATK for wildtype
-      combined.vcf    output of #{$0} (DEFAULT: STDOUT)
+      annotation.txt    output of GATK for wildtype
+      with_annot.vcf    output of #{$0} (DEFAULT: STDOUT)
 EOF
 
-unless ARGV.length == 3
+unless ARGV.length == 2
   puts usage
   exit
 end
 
-
+@range = 1000
+@exon_num = 999
 
 combined = File.open(ARGV[0],'r')
 annotation = File.open(ARGV[1],'r')
-outfile = File.new(ARGV[2],'w')
-
 
 line_combined = combined.readline()
 header = line_combined
@@ -30,17 +29,36 @@ while line_combined.include?('#')
     locus << location[-1]
   end
   header += line_combined
-  line_combined = combined.readline()
-
+  puts line_combined
+  break if combined.eof?()
+  line_combined = combined.readline().chomp()
 end
 
-outfile.write(header)
-
-def is_in_range?(num1, num2, distance)
-  dis = (num2-num1).abs
-  dis <= distance
+def within_region?(pos_mutation, gen_start,gen_end)
+  STDERR.puts "#{pos_mutation}  #{gen_start} #{gen_end}" if  pos_mutation == 1040990
+  pos_mutation >= (gen_start-@range) && pos_mutation <= gen_end
 end
 
+def within_exon_region?(pos_mutation, gen_start,gen_end)
+  pos_mutation >= gen_start && pos_mutation <= gen_end
+end
+
+def promoter?(pos_mutation, gen_start,gen_end)
+  pos_mutation <= gen_end
+end
+
+def exon?(pos_mutation,exon_starts,exon_ends)
+  i = 0
+  exon_starts.each do |current|
+    if within_exon_region?(pos_mutation, current.to_i, exon_ends[i].to_i)
+      @exon_num = i
+      return true
+      break
+    end
+    i += 1
+  end
+  false
+end
 
 line_annotation = annotation.readline()
 a_combined = line_combined.split(" ")
@@ -48,69 +66,74 @@ a_annotation = line_annotation.split(" ")
 
 locus.each do |location|
   case location
-  when a_annotation[2] && a_combined[0]
+  when a_combined[0] && a_annotation[2]
 
-    while a_combined[0] == location
+    while a_combined[0] ==  location && a_annotation[2] == location
+
       case
-      when
-##### CHANGE HERE
-        a_combined[1] == a_wildtype[1] && a_mutant[5] > a_wildtype[5]
-        combined.write(line_mutant)
-        break if mutant.eof?()
-        line_mutant = mutant.readline()
-        a_mutant = line_mutant.split(" ")
-        break if wildtype.eof?()
-        line_wildtype = wildtype.readline()
-        a_wildtype = line_wildtype.split(" ")
-      when a_mutant[1] == a_wildtype[1] && a_mutant[4] != a_wildtype[4]
-        combined.write(line_mutant)
-        break if mutant.eof?()
-        line_mutant = mutant.readline()
-        a_mutant = line_mutant.split(" ")
-        break if wildtype.eof?()
-        line_wildtype = wildtype.readline()
-        a_wildtype = line_wildtype.split(" ")
+      when within_region?(a_combined[1].to_i, a_annotation[4].to_i,a_annotation[5].to_i)
+        # name
+        a_combined[10] = a_annotation[1]
+        # direction
+        a_combined[11] = a_annotation[3]
 
-      when a_mutant[1] < a_wildtype[1]
-        combined.write(line_mutant)
-        break if mutant.eof?()
-        line_mutant = mutant.readline()
-        a_mutant = line_mutant.split(" ")
-      when a_mutant[1] > a_wildtype[1]
-        break if wildtype.eof?()
-        line_wildtype = wildtype.readline()
-        a_wildtype = line_wildtype.split(" ")
+        exon_starts = a_annotation[9].split(',')
+        exon_ends = a_annotation[10].split(',')
+        case
+        when exon?(a_combined[1].to_i,exon_starts,exon_ends)
+          a_combined[12] = "exon#{@exon_num}"
+          @exon_num = 999
+        when promoter?(a_combined[1].to_i, a_annotation[4].to_i,a_annotation[5].to_i)
+          a_combined[12] = "promotor"
+        else
+          a_combined[12] = "intron"
+        end
+        puts a_combined.join("\t") + "\n"
+        break if combined.eof?()
+        line_combined = combined.readline().chomp()
+        a_combined = line_combined.split()
+      when a_combined[1].to_i < a_annotation[4].to_i
+        break if combined.eof?()
+        line_combined = combined.readline()
+        a_combined = line_combined.split(" ")
+      when a_combined[1].to_i > a_annotation[5].to_i
+        break if annotation.eof?()
+        line_annotation = annotation.readline()
+        a_annotation = line_annotation.split(" ")
       else
-        break if wildtype.eof?()
-        line_wildtype = wildtype.readline()
-        a_wildtype = line_wildtype.split(" ")
-        break if mutant.eof?()
-        line_mutant = mutant.readline()
-        a_mutant = line_mutant.split(" ")
+        break if combined.eof?()
+        line_combined = combined.readline().chomp()
+        a_combined = line_combined.split()
       end
     end
 
-    while a_wildtype[0] == location
-      break if wildtype.eof?()
-      line_wildtype = wildtype.readline()
-      a_wildtype = line_wildtype.split(" ")
+
+
+    while a_combined[0] == location
+      break if combined.eof?()
+      line_combined = combined.readline()
+      a_combined = line_combined.split(" ")
+    end
+
+    while a_annotation[2] == location
+
+      break if annotation.eof?()
+      line_annotation = annotation.readline()
+      a_annotation = line_annotation.split(" ")
     end
 
   when a_annotation[2]
     while a_annotation[2] == location
+      break if annotation.eof?()
       line_annotation = annotation.readline()
       a_annotation = line_annotation.split(" ")
     end
 
   when a_combined[0]
     while a_combined[0] == location
-
-      out.write(line_combined+"")
-      line_mutant = mutant.readline()
-      a_mutant = line_mutant.split(" ")
+      break if combined.eof?()
+      line_combined = combined.readline()
+      a_combined = line_combined.split(" ")
     end
   end
-
-
-
 end
