@@ -12,27 +12,10 @@ unless ARGV.length == 2
   exit
 end
 
+# promotor region
 @range = 1000
+# dummy
 @exon_num = 999
-
-combined = File.open(ARGV[0],'r')
-annotation = File.open(ARGV[1],'r')
-
-line_combined = combined.readline()
-header = line_combined
-locus = []
-
-while line_combined.include?('#')
-  location = line_combined.scan(/##contig=<ID=+\w+/)
-  if !location.empty?()
-    location = location[0].split('=')
-    locus << location[-1]
-  end
-  header += line_combined
-  puts line_combined
-  break if combined.eof?()
-  line_combined = combined.readline().chomp()
-end
 
 def within_region?(pos_mutation, gen_start,gen_end)
   STDERR.puts "#{pos_mutation}  #{gen_start} #{gen_end}" if  pos_mutation == 1040990
@@ -60,16 +43,37 @@ def exon?(pos_mutation,exon_starts,exon_ends)
   false
 end
 
+
+# main
+
+combined = File.open(ARGV[0],'r')
+annotation = File.open(ARGV[1],'r')
+
+line_combined = combined.readline()
+header = line_combined
+locus = []
+
+while line_combined.include?('#')
+  location = line_combined.scan(/##contig=<ID=+\w+/)
+  if !location.empty?()
+    location = location[0].split('=')
+    locus << location[-1]
+  end
+  header += line_combined
+  puts line_combined
+  break if combined.eof?()
+  line_combined = combined.readline().chomp()
+end
+
 line_annotation = annotation.readline()
 a_combined = line_combined.split(" ")
 a_annotation = line_annotation.split(" ")
 
 locus.each do |location|
-  case location
-  when a_combined[0] && a_annotation[2]
+  case
+  when a_combined[0] == location && a_annotation[2] == location
 
-    while a_combined[0] ==  location && a_annotation[2] == location
-
+    while a_combined[0] == location && a_annotation[2] == location
       case
       when within_region?(a_combined[1].to_i, a_annotation[4].to_i,a_annotation[5].to_i)
         # name
@@ -81,6 +85,7 @@ locus.each do |location|
         exon_ends = a_annotation[10].split(',')
         case
         when exon?(a_combined[1].to_i,exon_starts,exon_ends)
+          @exon_num = (exon_starts.length() - @exon_num) if a_combined[11] == "-"
           a_combined[12] = "exon#{@exon_num}"
           @exon_num = 999
         when promoter?(a_combined[1].to_i, a_annotation[4].to_i,a_annotation[5].to_i)
@@ -106,30 +111,25 @@ locus.each do |location|
         a_combined = line_combined.split()
       end
     end
-
-
-
     while a_combined[0] == location
       break if combined.eof?()
       line_combined = combined.readline()
       a_combined = line_combined.split(" ")
     end
-
-    while a_annotation[2] == location
-
-      break if annotation.eof?()
-      line_annotation = annotation.readline()
-      a_annotation = line_annotation.split(" ")
-    end
-
-  when a_annotation[2]
     while a_annotation[2] == location
       break if annotation.eof?()
       line_annotation = annotation.readline()
       a_annotation = line_annotation.split(" ")
     end
 
-  when a_combined[0]
+  when a_annotation[2] == location
+    while a_annotation[2] == location
+      break if annotation.eof?()
+      line_annotation = annotation.readline()
+      a_annotation = line_annotation.split(" ")
+    end
+
+  when a_combined[0] == location
     while a_combined[0] == location
       break if combined.eof?()
       line_combined = combined.readline()
