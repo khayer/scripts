@@ -13,21 +13,30 @@ end
 locations = File.open(ARGV[2],'r')
 sorted = File.open(ARGV[1], 'w')
 
-`grep -v -e "\#" #{ARGV[0]} > tmp`
-`grep -e "\#" #{ARGV[0]} > tmp2`
-tmp2 = File.open('tmp2', 'r')
+`grep -v -e "\#" #{ARGV[0]} > #{ARGV[0]}_tmp`
+`grep -e "\#" #{ARGV[0]} > #{ARGV[0]}_tmp2`
+name = ARGV[0] + "_tmp2"
+tmp2 = File.open(name, 'r')
 while !tmp2.eof?
   sorted.write(tmp2.readline())
 end
+tmp2.close()
 
 
 while !locations.eof?
   position = locations.readline().chomp()
-  `grep -w #{position} tmp | sort -k 2,2 -n > tmp2`
+  `grep -w #{position} #{ARGV[0]}_tmp | sort -k 2,2 -n > #{ARGV[0]}_tmp2`
   #`grep -v -e "\#" " #{ARGV[0]} | grep -w #{position} | sort -k 2,2 -n > tmp`
 
-  tmp2 = File.open('tmp2', 'r')
+  tmp2 = File.open(name, 'r')
   while !tmp2.eof?
     sorted.write(tmp2.readline())
   end
+
 end
+
+name2 = ARGV[0] + "_tmp"
+#tmp = File.open( name2 ,'r')
+tmp2.close()
+#tmp.close()
+File.delete(name, name2)

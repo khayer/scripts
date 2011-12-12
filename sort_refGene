@@ -15,10 +15,11 @@ sorted = File.open(ARGV[1], 'w')
 
 while !locations.eof?
   position = locations.readline().chomp()
-  `grep -w #{position} #{ARGV[0]} | sort -k 5,5 -n > tmp`
-  tmp = File.open('tmp', 'r')
+  `grep -w #{position} #{ARGV[0]} | sort -k 5,5 -n > #{ARGV[0]}tmp`
+  tmp = File.open(ARGV[0]+'tmp', 'r')
   while !tmp.eof?
     sorted.write(tmp.readline())
   end
+  File.delete(ARGV[0]+'tmp')
 end
 

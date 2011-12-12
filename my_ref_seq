@@ -18,7 +18,6 @@ end
 @exon_num = 999
 
 def within_region?(pos_mutation, gen_start,gen_end)
-  STDERR.puts "#{pos_mutation}  #{gen_start} #{gen_end}" if  pos_mutation == 1040990
   pos_mutation >= (gen_start-@range) && pos_mutation <= gen_end
 end
 

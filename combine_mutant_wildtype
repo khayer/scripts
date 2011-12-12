@@ -119,7 +119,7 @@ locus.each do |location|
       a_mutant = line_mutant.split(" ")
     end
 
-  when a_mutant[0]
+  when a_mutant[0] == location
     while a_mutant[0] == location
       break if mutant.eof?
       if a_mutant[5].to_i > cut
