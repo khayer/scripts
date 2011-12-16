@@ -1,0 +1,174 @@
+#!/usr/bin/env ruby
+require 'csv'
+
+usage =<<EOF
+      #{$0} annotated.vcf sorted_refGene.txt organism.cdna.all.fa organism.ncrna.fa aminoacids.csv > outfile
+EOF
+
+if ARGV.length != 5
+  puts usage
+  exit
+end
+
+###################################### FUNCTIONS #################################################
+
+# a_anno
+# 0:chr 1:pos 3:oldBase 4:newBase 5:quality 10:gene 11:-/+ 12:exon/intron/promotor
+
+# a_gen
+# 1:gene 2:chr 3:+/- 4:start 5:stop 6:start_coding 7:end_coding 8:#ofExons
+# 9:ExonStarts 10:exonEnds
+
+def mutations_effect(a_anno, a_gen)
+  if $locus[a_anno[10]] && a_anno[3].length == a_anno[4].length
+    # original coding region
+    $cdna.pos = $locus[a_anno[10]]
+    transcript = original()
+    # compute position of mutation
+    exon_starts = a_gen[9].split(',')
+    exon_ends = a_gen[10].split(',')
+    mutation_position,exon_num = position_on_transcript(a_anno[1],a_gen[3],exon_starts,exon_ends,a_gen[6],a_gen[7])
+    #position = position - cds_start.to_i
+    a_anno[12] = "exon#{exon_num}"
+    start_triplet = (mutation_position/3 * 3) - 1
+    if start_triplet >= 0
+      code = transcript[start_triplet..start_triplet+2]
+      pos_in_triplet = mutation_position%3
+      original_aa = $codes[code]
+      code[pos_in_triplet] = a_anno[4]
+      mutated_aa = $codes[code[0..2]]
+      if original_aa != mutated_aa
+        a_anno[13] = pos_in_triplet + 1
+        a_anno[14] = original_aa[:name]
+        a_anno[15] = mutated_aa[:name]
+        puts a_anno.join("\t")
+      else
+        a_anno[13] = "same_AA"
+        STDERR.puts a_anno.join("\t")
+      end
+    end
+
+  else
+    if $locus_non_coding[a_anno[10]]
+      a_anno[13] = "ncrna"
+      STDERR.puts a_anno.join("\t")
+    else
+      if (a_anno[3].length >= a_anno[4].length || a_anno[3].length <= a_anno[4].length)
+        a_anno[13] = "indel"
+        puts a_anno.join("\t")
+      else
+        a_anno[13] = "?"
+        STDERR.puts a_anno.join("\t")
+      end
+    end
+
+  end
+
+
+end
+
+def position_on_transcript(pos_mutation,direction,exon_starts,exon_ends,start_coding,end_coding)
+  position = 0
+  exon_num = 999
+  if direction == "+"
+    exon_starts.each_with_index do |start, i|
+      start = start.to_i
+      start = start_coding.to_i if i == 0
+      stop = exon_ends[i].to_i
+      stop = end_coding.to_i if i == (exon_ends.length - 1)
+      if pos_mutation.to_i >= start && pos_mutation.to_i <= stop
+        position += pos_mutation.to_i - start
+        exon_num = i + 1
+        break
+      else
+        position += stop - start
+        exon_num = i + 1
+      end
+    end
+  else
+    # minus-strand
+    exon_starts = exon_starts.reverse()
+    exon_ends = exon_ends.reverse()
+    exon_starts.each_with_index do |start, i|
+      start = start.to_i
+      stop = exon_ends[i].to_i
+      if pos_mutation.to_i >= start && pos_mutation.to_i <= stop
+        position += stop - pos_mutation.to_i
+        exon_num = i + 1
+        break
+      else
+        position += stop-start
+        exon_num = i + 1
+      end
+    end
+  end
+  return position,exon_num
+end
+
+def original()
+  transcript = ""
+  k = nil
+  cds = ""
+  $cdna.each do |line|
+    break if line.include?(">")
+    line = line.tr('^ACGTN',"").chomp()
+    transcript += line
+  end
+  transcript
+end
+
+######################################### MAIN ###################################################
+
+## prepare random access for organism.cdna.fa
+$cdna = File.open(ARGV[2],'r')
+$locus = Hash[]
+$cdna.each do |line|
+  if line.include?(">")
+    a_line = line.split(" ")
+    name = a_line[0].split(">")
+    $locus[name[1]] = $cdna.pos
+  end
+end
+
+## prepare random access for organism.ncrna.fa
+$ncrna = File.open(ARGV[3],'r')
+$locus_non_coding = Hash[]
+$ncrna.each do |line|
+    if line.include?(">")
+    a_line = line.split(" ")
+    name = a_line[0].split(">")
+    $locus_non_coding[name] = $ncrna.pos
+  end
+end
+
+
+## preparing hash for aminoacids
+aminoacids_csv = ARGV[4]
+$codes = {}
+
+# header: code  name  short
+# example: GGG   Gly    G
+CSV.foreach(aminoacids_csv, :headers => true, :header_converters => :symbol, :converters => :all) do |row|
+  $codes[row.fields[0]] = Hash[row.headers[1..-1].zip(row.fields[1..-1])]
+end
+
+
+# The actual computation
+annotated = File.open(ARGV[0],'r')
+ref_gene = ARGV[1]
+
+#line_anno = annotated.readline()
+#a_anno = line_anno.split(" ")
+random = (rand*10000).floor
+tmp_file = "tmp" + random.to_s
+
+annotated.each do |line|
+  a_anno = line.split(" ")
+  `grep #{a_anno[10]} #{ref_gene} > #{tmp_file}`
+  gen_line = `grep #{a_anno[0]} #{tmp_file}`
+  a_gen = gen_line.split(" ")
+  mutations_effect(a_anno, a_gen)
+end
+
+File.delete(tmp_file)
+

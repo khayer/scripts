@@ -10,22 +10,23 @@ end
 
 annotated_dir = ARGV[0]
 ref_gene_dir = ARGV[1]
-output_dir = File.new("china_200_promo",'w')
+output_dir = File.new("ens_150_promo",'w')
+random = (rand*100).floor
 
 ref_gene_handle = File.open(ref_gene_dir,'r')
-#`grep exon #{annotated_dir} > tmp`
+`grep exon #{annotated_dir} | awk '($6 >= 150)' > tmp#{random}`
+`awk '($6 >= 150) ' #{annotated_dir} > tmp2#{random}`
+ref_gene_fraction = 100/ref_gene_handle.size
 
 while !ref_gene_handle.eof?
-  k = 0
-  #puts 'Hallo'
-  gen_array = ref_gene_handle.readline().split(" ")
-  #puts gen_array
-  gen_name = gen_array[1]
-  #k = gets `echo "hallo"`
 
-  k = `grep -c -w #{gen_name} #{annotated_dir} `
+  gen_array = ref_gene_handle.readline().split(" ")
+  gen_name = gen_array[1]
+  k = `grep -c -w #{gen_name} tmp2#{random} `
   if k.to_i == 1
-    output_dir.write(`grep exon #{annotated_dir} | grep  -w #{gen_name} #{annotated_dir} | awk '($6 >= 200)'`)
+    output_dir.write(` grep  -w #{gen_name} tmp#{random} `)
   end
 
 end
+
+File.delete('tmp'+ random, 'tmp2'+ random)

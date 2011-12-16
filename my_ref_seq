@@ -2,7 +2,7 @@
 usage =<<EOF
       #{$0} combined.vcf sorted_ref_gene.txt > out.txt
 _____________________________________________________________________________
-      mutant.vcf      output of GATK for mutant
+      mutant.vcf        output of GATK for mutant
       annotation.txt    output of GATK for wildtype
       with_annot.vcf    output of #{$0} (DEFAULT: STDOUT)
 EOF
@@ -43,8 +43,7 @@ def exon?(pos_mutation,exon_starts,exon_ends)
 end
 
 
-# main
-
+########################################### main ###############################################
 combined = File.open(ARGV[0],'r')
 annotation = File.open(ARGV[1],'r')
 
