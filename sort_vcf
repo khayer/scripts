@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 usage =<<EOF
-  #{$0} unsorted.vcf sorted.vcf locations
+      #{$0} unsorted.vcf sorted.vcf locations
 EOF
 
 if ARGV.length != 3

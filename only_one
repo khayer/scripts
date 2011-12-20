@@ -29,4 +29,4 @@ while !ref_gene_handle.eof?
 
 end
 
-File.delete('tmp'+ random, 'tmp2'+ random)
+File.delete("tmp"+ random.to_s, "tmp2"+ random.to_s)

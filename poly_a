@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+      #{$0} r1.fq r2.fq
+EOF
+
+if ARGV.length != 2
+  puts usage
+  exit
+end
+
+read_one = ARGV[0]
+read_two = ARGV[1]
+index = ARGV[2]
+
+
+# RUM
+system(" echo 'starting RUM at ' `date` >> #{read_one}log")
+system(" perl ~/rum2/RUM_runner.pl \
+         ~/RUM/rum.config_hg19 \
+        #{read_one},,,#{read_two} \
+        ~/Desktop/Poly-A/rum2 \
+        1 \
+        TESTS ")
+
+puts "done"
+exit
+
+# Read file
+handler = File.open("~/Desktop/Poly-A/rum/RUM.sam")
+
+while !handler.eof()
+  puts handler.readline()
+end
+
+puts "HAHA"

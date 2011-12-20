@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+      #{$0} sorted.vcf phastCons > output.vcf
+EOF
+
+if ARGV.length != 2
+  puts usage
+  exit
+end
+
+vcf = File.open(ARGV[0],'r')
+phast_cons = File.open(ARGV[1],'r')
+line_cons = phast_cons.readline.split(" ")
+random = (rand*10000).floor
+tmp_file = "tmp#{random}"
+
+vcf.each do |line|
+  line = line.split(" ")
+  current_location = line[0]
+
+  `grep -w #{current_location} #{ARGV[1]} > #{tmp_file}`
+  tmp = File.open(tmp_file,'r')
+  line_cons = tmp.readline().split(" ")
+  while current_location == line_cons[1] && !tmp.eof? && !vcf.eof?
+    right_border = line_cons[2].to_i
+    left_border = line_cons[3].to_i
+    current_position = line[1].to_i
+    #puts right_border, left_border, current_position
+    #puts current_location
+    case
+    when current_position >= right_border && current_position <= left_border
+      line << right_border
+      line << left_border
+      line << line_cons[5]
+      puts line.join("\t") + "\n"
+      line = vcf.readline().split(" ")
+      current_location = line[0]
+    when current_position < right_border
+      line = vcf.readline().split(" ")
+      current_location = line[0]
+    when current_position > left_border
+      line_cons = tmp.readline.split(" ")
+    end
+  end
+end
