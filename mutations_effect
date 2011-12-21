@@ -50,7 +50,7 @@ def mutations_effect(a_anno, a_gen)
       a_anno[13] = "ncrna"
       STDERR.puts a_anno.join("\t")
     else
-      if (a_anno[3].length >= a_anno[4].length || a_anno[3].length <= a_anno[4].length)
+      if (a_anno[3].length > a_anno[4].length || a_anno[3].length < a_anno[4].length)
         a_anno[13] = "indel"
         puts a_anno.join("\t")
       else

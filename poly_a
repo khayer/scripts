@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 usage =<<EOF
-      #{$0} r1.fq r2.fq
+      #{$0} rum.sam refGene.txt
 EOF
 
 if ARGV.length != 2
@@ -8,22 +8,33 @@ if ARGV.length != 2
   exit
 end
 
-read_one = ARGV[0]
-read_two = ARGV[1]
-index = ARGV[2]
+sam = ARGV[0]
+refGene = ARGV[1]
 
+random = (rand*10000).floor
+tmp_file_header = "tmp#{random}_header"
+`grep @ #{sam} > #{tmp_file_header}`
+tmp_file_reads = "tmp#{random}_reads"
+`grep -v @ #{sam} > #{tmp_file_reads}`
 
-# RUM
-system(" echo 'starting RUM at ' `date` >> #{read_one}log")
-system(" perl ~/rum2/RUM_runner.pl \
-         ~/RUM/rum.config_hg19 \
-        #{read_one},,,#{read_two} \
-        ~/Desktop/Poly-A/rum2 \
-        1 \
-        TESTS ")
+tmp_file_output = "tmp#{random}_output"
+output_handler = File.new(tmp_file_output, 'w')
 
-puts "done"
-exit
+tmp_file_annotations = "tmp#{random}_annotations"
+annotations_handler = File.new(tmp_file_annotations, 'w')
+
+# Finding Poly-A tails
+reads_handler = File.open(tmp_file_reads,'r')
+reads_handler.each do |line_fwd|
+  line_rev = reads_handler.readline()
+  if line_rev =~ /AATAAA|TTATTT/
+    output_handler.write(line_fwd, line_rev)
+    line_rev = line_rev.split(" ")
+
+  end
+  if line_fwd =~ /AATAAA|TTATTT/
+end
+
 
 # Read file
 handler = File.open("~/Desktop/Poly-A/rum/RUM.sam")
