@@ -27,12 +27,19 @@ annotations_handler = File.new(tmp_file_annotations, 'w')
 reads_handler = File.open(tmp_file_reads,'r')
 reads_handler.each do |line_fwd|
   line_rev = reads_handler.readline()
-  if line_rev =~ /AATAAA|TTATTT/
+  case
+  when line_fwd =~ /AATAAA|TTATTT/
+    output_handler.write(line_fwd, line_rev)
+    line_fwd = line_fwd.split(" ")
+    location = line_fwd[2]
+    position = line_fwd[3]
+
+  when line_rev =~ /AATAAA|TTATTT/
     output_handler.write(line_fwd, line_rev)
     line_rev = line_rev.split(" ")
 
   end
-  if line_fwd =~ /AATAAA|TTATTT/
+
 end
 
 

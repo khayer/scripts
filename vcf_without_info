@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+      #{$0} file.vcf > file.txt
+EOF
+
+if ARGV.length != 1
+  puts usage
+  exit
+end
+
+
+vcf = File.open(ARGV[0], 'r')
+
+vcf.each do |line|
+  line = line.split(" ")
+  puts line[0..9].join("\t")
+end
