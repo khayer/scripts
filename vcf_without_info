@@ -13,5 +13,5 @@ vcf = File.open(ARGV[0], 'r')
 
 vcf.each do |line|
   line = line.split(" ")
-  puts line[0..9].join("\t")
+  puts line[0..6].join("\t")
 end

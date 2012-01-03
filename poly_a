@@ -12,10 +12,10 @@ sam = ARGV[0]
 refGene = ARGV[1]
 
 random = (rand*10000).floor
-tmp_file_header = "tmp#{random}_header"
-`grep @ #{sam} > #{tmp_file_header}`
-tmp_file_reads = "tmp#{random}_reads"
-`grep -v @ #{sam} > #{tmp_file_reads}`
+#tmp_file_header = "tmp#{random}_header"
+#`grep @ #{sam} > #{tmp_file_header}`
+tmp_file_mapped_reads = "tmp#{random}_reads"
+` awk '/chr/' > #{tmp_file_mapped_reads}`
 
 tmp_file_output = "tmp#{random}_output"
 output_handler = File.new(tmp_file_output, 'w')
@@ -24,30 +24,73 @@ tmp_file_annotations = "tmp#{random}_annotations"
 annotations_handler = File.new(tmp_file_annotations, 'w')
 
 # Finding Poly-A tails
-reads_handler = File.open(tmp_file_reads,'r')
+reads_handler = File.open(tmp_file_mapped_reads,'r')
+
 reads_handler.each do |line_fwd|
   line_rev = reads_handler.readline()
   case
   when line_fwd =~ /AATAAA|TTATTT/
-    output_handler.write(line_fwd, line_rev)
-    line_fwd = line_fwd.split(" ")
+    line_fwd = line_fwd.split("\t")
     location = line_fwd[2]
     position = line_fwd[3]
-
+    flag = 1
   when line_rev =~ /AATAAA|TTATTT/
-    output_handler.write(line_fwd, line_rev)
-    line_rev = line_rev.split(" ")
+    line_rev = line_rev.split("\t")
+    location = line_rev[2]
+    position = line_rev[3]
+    flag = 1
+  end
+  if flag
+    flag = nil
+    gen_lines = `grep #{location} #{refGene} | awk '$5 <= #{position} && $6 >= #{position}'`
+    gen_lines = gen_lines.split("\n")
+    gen_lines.each do |line|
+      annotations_handler.write(line + "\n")
+    end
+  end
+end
+
+annotations_handler.close()
+
+tmp_file_annotations_sorted = tmp_file_annotations + "_sorted"
+`sort -k 3 #{tmp_file_annotations} > #{tmp_file_annotations_sorted}`
+
+annotations_handler2 = File.open(tmp_file_annotations_sorted,'r')
+
+locus = Hash[]
+dummy = ""
+annotations_handler2.each do |line|
+  line = line.split("\t")
+  if dummy != line[2]
+    dummy = line[2]
+    locus[line[2]] = annotations_handler2.pos - line.join("\t").length()
+  end
+end
+
+reads_handler.rewind()
+reads_handler.each do |read|
+  read = read.delete("\n")
+  read = read.split("\t")
+  chromosome = read[2]
+  position = read[3].to_i
+  annotations_location = locus[chromosome]
+
+  if annotations_location
+
+    annotations_handler2.seek(annotations_location)
+    line = annotations_handler2.readline
+    genes = []
+
+    while line.include?(chromosome)
+      line=line.split("\t")
+      if position >= line[4].to_i && position <= line[5].to_i
+        k = ""
+        k = "POLY-A" if read[9] =~ /AATAAA|TTATTT/
+        puts read.join("\t") + "\t" + line[1] + "\t" + k
+      end
+      line = ""
+      line = annotations_handler2.readline if !annotations_handler2.eof?()
+    end
 
   end
-
 end
-
-
-# Read file
-handler = File.open("~/Desktop/Poly-A/rum/RUM.sam")
-
-while !handler.eof()
-  puts handler.readline()
-end
-
-puts "HAHA"

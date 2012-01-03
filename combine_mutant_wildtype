@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 usage =<<EOF
-      #{$0} mutant.vcf wildtype.vcf > combined.vcf
+      #{$0} mutant.vcf wildtype.vcf combined.vcf
 _____________________________________________________________________________
       mutant.vcf      output of GATK for mutant
       wildtype.vcf    output of GATK for wildtype
@@ -45,7 +45,7 @@ end
 
 a_mutant = line_mutant.split(" ")
 a_wildtype = line_wildtype.split(" ")
-cut = 100
+cut = 0
 
 locus.each do |location|
   break if mutant.eof?
@@ -56,7 +56,7 @@ locus.each do |location|
   when a_mutant[0] == location && a_wildtype[0] == location
     while a_mutant[0] == location && a_wildtype[0] == location
       case
-      when a_mutant[1] == a_wildtype[1] && (a_mutant[5].to_i > a_wildtype[5].to_i*2)
+      when a_mutant[1] == a_wildtype[1] && (a_mutant[5].to_i > a_wildtype[5].to_i)
         if a_mutant[5].to_i > cut
           combined.write(line_mutant)
         end
