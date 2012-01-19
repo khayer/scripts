@@ -15,7 +15,7 @@ random = (rand*10000).floor
 #tmp_file_header = "tmp#{random}_header"
 #`grep @ #{sam} > #{tmp_file_header}`
 tmp_file_mapped_reads = "tmp#{random}_reads"
-` awk '/chr/' > #{tmp_file_mapped_reads}`
+` awk '/chr/' #{sam} > #{tmp_file_mapped_reads}`
 
 tmp_file_output = "tmp#{random}_output"
 output_handler = File.new(tmp_file_output, 'w')
