@@ -67,21 +67,22 @@ File.open(sam_doc, 'r').each do |line|
 
       position_left = line[3].to_i
       position_right = position_left + 100
+      pos_on_sequence = sheet1[i,1] - position_left
 
       if within?(position_left, position_right, sheet1[i,1])
         sheet1[i,6] += 1
         sequence = line[9]
-        pos_on_sequence = (sheet1[i,1] - position_left)
+        cigar = line[5]
         old_base = sheet1[i,2]
         new_base = sheet1[i,3]
 
         case
-        when old_base.length >= new_base.length
+        when old_base.length >= new_base.length && cigar =~ /[DS]/
           #### Deletion or SNP
           actual_base = sequence[pos_on_sequence...pos_on_sequence+old_base.length]
           sheet1[i,5] += 1 if actual_base != old_base
 
-        else
+        when old_base.length < new_base.length && cigar =~ /[I]/
           #### Insertion
           actual_base = sequence[pos_on_sequence...pos_on_sequence+new_base.length]
           sheet1[i,5] += 1 if actual_base == new_base
@@ -94,20 +95,6 @@ File.open(sam_doc, 'r').each do |line|
   end
 end
 
-
-
-
-=begin
-sheet1[1,0] = 'Japan'
-sheet1.row(1).push 'Creator of Ruby'
-sheet1.row(1).unshift 'Yuki Hiro'
-sheet1.row(2).replace [ 'Daniel J. Berger', 'U.S.A.',
-                          'Author of original code for Spreadsheet::Excel' ]
-sheet1.row(3).push 'Charles Lowe', 'Author of the ruby-ole Library'
-sheet1.row(3).insert 1, 'Unknown'
-sheet1.update_row 4, 'Hannes Wyss', 'Switzerland', 'Author'
-sheet1[0,0] = Spreadsheet::Link.new 'www.google.com', 'link text'
-=end
 book.write xls_doc
 
 
