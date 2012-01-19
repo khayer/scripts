@@ -72,17 +72,16 @@ File.open(sam_doc, 'r').each do |line|
       if within?(position_left, position_right, sheet1[i,1])
         sheet1[i,6] += 1
         sequence = line[9]
-        cigar = line[5]
         old_base = sheet1[i,2]
         new_base = sheet1[i,3]
 
         case
-        when old_base.length >= new_base.length && cigar =~ /[DS]/
+        when old_base.length >= new_base.length
           #### Deletion or SNP
           actual_base = sequence[pos_on_sequence...pos_on_sequence+old_base.length]
           sheet1[i,5] += 1 if actual_base != old_base
 
-        when old_base.length < new_base.length && cigar =~ /[I]/
+        when old_base.length < new_base.length
           #### Insertion
           actual_base = sequence[pos_on_sequence...pos_on_sequence+new_base.length]
           sheet1[i,5] += 1 if actual_base == new_base
