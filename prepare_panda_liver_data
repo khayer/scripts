@@ -3,7 +3,7 @@ require 'csv'
 require 'rsruby'
 
 usage =<<EOF
-      #{$0} hughes.csv prepared_hughes.csv
+      #{$0} panda.csv prepared_panda.csv
 EOF
 
 if ARGV.length != 2
@@ -37,11 +37,12 @@ out = File.new(ARGV[1],"w")
 CSV.foreach(ARGV[0],  {:headers => :first_row}) do |row|
   numbers = []
   time_points = []
-  (18..65).each do |i|
-    numbers << row["LiverJH#{i}CEL"].to_f
+  %w{30 34 38 42 46 50 54 58 62 66 70 74}.each do |i|
+    number = (row["CT#{i}A"].to_f + row["CT#{i}B"].to_f) / 2
+    numbers << number
     time_points << i
   end
-  #time = 65-18 + 1
+  #time = 12
   #fitted = R.curveFitting(numbers,time)
   max = R.max(numbers).to_i
   min = R.min(numbers).to_i
@@ -49,7 +50,8 @@ CSV.foreach(ARGV[0],  {:headers => :first_row}) do |row|
   scaled = R.scaleData(numbers).map {|e| e.to_i }
   #averaged = R.scaleData(fitted).map {|e| e.to_i }
   averaged = R.avgData(scaled).map {|e| e.to_i }
-  cubase = "http://chart.apis.google.com/chart?chs=%sx%s&cht=lc&chxt=x,y&chxl=0:|18||||||24||||||30||||||36||||||42||||||48||||||54||||||60|||||65||1:|#{min}|#{mid}|#{max}|&chxp=1,2,50,97&chxr=0,18,66&chls=0,0,0|2,1,0&chf=c,ls,0,CCCCCC,0.125,FFFFFF,0.25,CCCCCC,0.25,FFFFFF,0.25,CCCCCC,0.125&chd=t:#{scaled.join(",")}|#{averaged.join(",")}&chm=o,555555,0,-1,5"
+
+  cubase = "http://chart.apis.google.com/chart?chs=%sx%s&cht=lc&chxt=x,y&chxl=0:|30||||||36||||||42||||||48||||||54||||||60||||||66||||||72|||1:|#{min}|#{mid}|#{max}|&chxp=1,2,50,97&chxr=0,18,66&chls=0,0,0|2,1,0&chf=c,ls,0,CCCCCC,0.125,FFFFFF,0.25,CCCCCC,0.25,FFFFFF,0.25,CCCCCC,0.125&chd=t:#{scaled.join(",")}|#{averaged.join(",")}&chm=o,555555,0,-1,5"
   #out.puts row["Probe Set"] +"|"+ numbers.join(",") + "|" + dp_s.join(",")
-  out.puts row["Probe Set"] +"@"+time_points.join(",")+"@"+numbers.join(",")+"@"+cubase
+  out.puts row["Affy ID"] +"@"+time_points.join(",")+"@"+numbers.join(",")+"@"+cubase
 end
