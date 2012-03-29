@@ -49,10 +49,12 @@ CSV.foreach(ARGV[0],  {:headers => :first_row}) do |row|
   numbers2 = []
   time_points2 = []
   %w{22 26 30 34 38 42 46}.each do |i|
-    number2 = (row2["ct#{i}_clock_rep1"].to_f + row2["ct#{i}_clock_rep2"].to_f) / 2
+    number2 = R.mean(numbers).to_i if i == "42"
+    number2 = (row2["ct#{i}_clock_rep1"].to_f + row2["ct#{i}_clock_rep2"].to_f) / 2 if i != "42"
     numbers2 << number2
     time_points2 << i
   end
+
 
   #time = 12
   #fitted = R.curveFitting(numbers,time)
