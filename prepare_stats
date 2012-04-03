@@ -11,106 +11,68 @@ if ARGV.length != 4
   exit
 end
 
-# %w{  assay_id assay_name probeset_id probeset_name cosopt_p_value cosopt_q_value cosopt_period_length cosopt_phase fisherg_p_value fisherg_q_value fisherg_period_length jtk_p_value jtk_q_value jtk_period_length jtk_lag jtk_amp}
-
-# LOMB_SCARGLE
-# index,probe,PhaseShift,PhaseShiftHeight,PeakIndex,PeakSPD,Period,p,N,Nindependent,Nyquist
-puts "Calculate q_value for LOMB_SCARGLE"
-p_values = []
+# functions
+####################################################
 R = RSRuby.instance()
 R.eval_R("getQvalue <- function(p_values) {
   library(qvalue)
   qobj <- qvalue(p_values)
   qobj$qvalues
 }")
+
 R.eval_R("scaleData <- function(x) {
   k = (x-min(x))/(max(x)-min(x))*100
   k/100 * 90 + 5
 }")
+####################################################
+
+# %w{  assay_id assay_name probeset_id probeset_name cosopt_p_value cosopt_q_value cosopt_period_length cosopt_phase fisherg_p_value fisherg_q_value fisherg_period_length jtk_p_value jtk_q_value jtk_period_length jtk_lag jtk_amp}
+
+# LOMB_SCARGLE
+# index,probe,PhaseShift,PhaseShiftHeight,PeakIndex,PeakSPD,Period,p,N,Nindependent,Nyquist
+puts "Calculate q_value for LOMB_SCARGLE"
+p_values = []
 
 CSV.foreach(ARGV[1], {:headers => :first_row}) do |row|
+
   p_values << row["p"].to_f
+
 end
 
+q_values = R.getQvalue(p_values)
+
+
+puts "Calculate q_value for DELICHTENBERG"
 p_values_lichtenberg = []
+
 File.open(ARGV[2]).each do |line|
+
   next if line =~ /probe/
   line = line.split("\t")
   p_values_lichtenberg << line[1].to_f
-end
-#puts p_values_lichtenberg.join(",")
-#puts p_values.join(",")
-q_values = R.getQvalue(p_values)
-puts "Calculate q_value for DELICHTENBERG"
-q_values_lichtenberg = R.getQvalue(p_values_lichtenberg)
-# JTK
-#"BH.Q","ADJ.P","PER","LAG","AMP","LiverJH18CEL","
-CSV.open(ARGV[3], "wb") do |csv|
-  count = 0
-  lomb = CSV.open(ARGV[1],{:headers => :first_row})
-  CSV.foreach(ARGV[0],{:headers => :first_row}) do |row1|
-    row2 = lomb.readline()
-    csv << [row1["row_names"], row2["p"], q_values[count], row2["Period"], row2["PhaseShift"], p_values_lichtenberg[count], q_values_lichtenberg[count],"24", row1["BH.Q"], row1["ADJ.P"], row1["PER"], row1["LAG"],row1["AMP"]]
-    count += 1
-  end
+
 end
 
-#CSV.open(ARGV[1], "wb") do |csv|
-#  CSV.foreach(ARGV[0],  {:headers => :first_row}) do |row|
-#    probeset_name = row["Probe Set ID"]
-#    genechip_name = row["GeneChip Array"]
-#    species = row["Species Scientific Name"]
-#    annotation_date = row["Annotation Date"]
-#    sequence_type = row["Sequence Type"]
-#    sequence_source = row["Sequence Source"]
-#    transcript_id = row["Transcript ID(Array Design)"]
-#    #gb:BC024686.1 /DB_XREF=gi:19354080 /FEA=FLmRNA /CNT=416 /TID=Mm.26422.1 /TIER=FL+Stack /STK=110 /UG=Mm.26422 /LL=54161 /UG_GENE=Copg1 /DEF=Mus musculus, coatomer protein complex, subunit gamma 1, clone MGC:30335 IMAGE:3992144, mRNA, complete cds. /PROD=coatomer protein complex, subunit gamma 1 /FL=gb:AF187079.1 gb:BC024686.1 gb:NM_017477.1 gb:BC024896.1
-#    helper = row["Target Description"].split(" /")
-#    if helper[10]
-#      target_description = helper[10].delete("DEF=")
-#    else
-#      target_description = "-"
-#    end
-#    representative_public_id = row["Representative Public ID"]
-#    archival_unigene_cluster = row["Archival UniGene Cluster"]
-#    unigene_id = row["UniGene ID"]
-#    genome_version = row["Genome Version"]
-#    alignments = row["Alignemts"]
-#    gene_title = row["Gene Title"]
-#    gene_symbol = row["Gene Symbol"]
-#    chromosomal_location = row["Chromosomal Location"]
-#    unigene_cluster_type = row["Unigene Cluster Type"]
-#    ensembl = row["Ensembl"]
-#    entrez_gene = row["Entrez Gene"]
-#    swissprot = row["SwissProt"]
-#    ec = row["EC"]
-#    omim = row["OMIM"]
-#    refseq_protein_id = row["RefSeq Protein ID"]
-#    refseq_transcript_id = row["RefSeq Transcript ID"]
-#    flybase = row["FlyBase"]
-#    agi = row["AGI"]
-#    wormbase = row["WormBase"]
-#    mgi_name = row["MGI Name"]
-#    rgd_name = row["RGD Name"]
-#    sgd_accession_number = row["SGD accession number"]
-#    go_biological_process = row["Gene Ontology Biological Process"]
-#    go_cellular_component = row["Gene Ontology Cellular Component"]
-#    go_molecular_function = row["Gene Ontology Molecular Function"]
-#    pathway = row["Pathway"]
-#    interpro = row["InterPro"]
-#    trans_membrane = row["Trans Membrane"]
-#    qtl = row["QTL"]
-#    annotation_description = row["Annotation Description"]
-#    annotation_transcript_cluster = row["Annotation Transcript Cluster"]
-#    transcript_assignments = row["Transcript Assignments"]
-#    annotation_notes = row["Annotation Notes"]
-#    csv << [probeset_name, genechip_name, species, annotation_date, sequence_type,
-#      sequence_source, transcript_id, target_description, representative_public_id,
-#      archival_unigene_cluster, unigene_id, genome_version, alignments, gene_title, gene_symbol,
-#      chromosomal_location, unigene_cluster_type, ensembl, entrez_gene, swissprot, ec, omim,
-#      refseq_protein_id, refseq_transcript_id, flybase, agi, wormbase, mgi_name, rgd_name,
-#      sgd_accession_number, go_biological_process, go_cellular_component, go_molecular_function,
-#      pathway, interpro, trans_membrane, qtl, annotation_description, annotation_transcript_cluster,
-#      transcript_assignments, annotation_notes]
-#  end
-#end
+q_values_lichtenberg = R.getQvalue(p_values_lichtenberg)
+
+# JTK
+#"BH.Q","ADJ.P","PER","LAG","AMP","LiverJH18CEL"
+
+CSV.open(ARGV[3], "wb") do |csv|
+
+  count = 0
+  lomb = CSV.open(ARGV[1],{:headers => :first_row})
+
+  CSV.foreach(ARGV[0],{:headers => :first_row}) do |row1|
+
+    row2 = lomb.readline()
+    csv << [row1["row_names"], row2["p"],
+      q_values[count], row2["Period"],
+      row2["PhaseShift"], p_values_lichtenberg[count],
+      q_values_lichtenberg[count],"24", row1["BH.Q"],
+      row1["ADJ.P"], row1["PER"], row1["LAG"],row1["AMP"]]
+    count += 1
+
+  end
+
+end
