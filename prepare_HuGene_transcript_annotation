@@ -21,7 +21,7 @@ end
 # transcript_assignments annotation_notes }
 CSV.open(ARGV[1], "wb") do |csv|
   CSV.foreach(ARGV[0],  {:headers => :first_row}) do |row|
-    probeset_name = row["probese_id"]
+    probeset_name = row["probeset_id"]
     genechip_name = "HuGene-1_0-st-v1"
     species = "Homo Sapiens"
     annotation_date = "2011-06-22"
