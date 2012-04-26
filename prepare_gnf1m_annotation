@@ -28,13 +28,13 @@ CSV.open(ARGV[1], "wb") do |csv|
     sequence_type = "-"
     sequence_source = "-"
     transcript_id = "-"
-    target_description = row["Description"]
+    target_description = "-"
     representative_public_id = "-"
     archival_unigene_cluster = "-"
     unigene_id = row["UniGene"]
     genome_version = "-"
     alignments = "-"
-    gene_title = "-"
+    gene_title = row["Description"]
     gene_symbol = row["Symbol"]
     chromosomal_location = "-"
     unigene_cluster_type = "-"
@@ -43,8 +43,8 @@ CSV.open(ARGV[1], "wb") do |csv|
     swissprot = "-"
     ec = "-"
     omim = "-"
-    refseq_protein_id = "-"
-    refseq_transcript_id = "-"
+    refseq_protein_id = "---"
+    refseq_transcript_id = row["RefSeq"]
     flybase = "-"
     agi = "-"
     wormbase = "-"
