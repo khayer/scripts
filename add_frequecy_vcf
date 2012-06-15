@@ -1,0 +1,97 @@
+#!/usr/bin/env ruby
+require 'spreadsheet'
+require 'csv'
+
+### Functions #######################################################
+#####################################################################
+
+def make_link(pos, location)
+  location = location.delete("chr")
+  pos_l = (pos - 10).to_s
+  pos_r = (pos + 10).to_s
+  link = "http://www.ensembl.org/Danio_rerio/Location/View?r=#{location}:#{pos_l}-#{pos_r}"
+end
+
+def within?(position_left, position_right, mutation_position)
+  position_left <= mutation_position && position_right >= mutation_position
+end
+
+### Main ############################################################
+#####################################################################
+
+usage =<<EOF
+      #{$0} high_effect.csv mapped.sam out.xls
+EOF
+
+if ARGV.length != 3
+  puts usage
+  exit
+end
+
+csv_doc = ARGV[0]
+sam_doc = ARGV[1]
+xls_doc = ARGV[2]
+
+book = Spreadsheet::Workbook.new
+sheet1 = book.create_worksheet
+sheet1.row(0).push 'Location', 'Position', 'Old base', 'New base', 'Quality', '# of mutatant', '# of reads region', 'Effect_Type', 'Effect_Impact', 'Functional_Class', 'Codon_Change', 'Gene_Name', 'Gene_BioType', 'Coding_Capacity', 'Transcript_ID', 'Start_phast_cons', 'End_phast_cons', 'PhastCons'
+
+i = 1
+dummy = ""
+locator = Hash.new()
+
+CSV.foreach(csv_doc, {:headers => :first_row}) do |line|
+  location = line["Location"]
+  position = line["Position"].to_i
+  link = make_link(position, location)
+
+  if dummy != location
+    dummy = location
+    locator[location] = i
+  end
+  sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line["Old base"],line["New base"],line["Quality"].to_i, 0.to_i, 0.to_i , line["Effect_Type"], line["Effect_Impact"], line["Functional_Class"], line["Codon_Change"], line["Gene_Name"], line["Gene_BioType"], line["Coding_Capacity"], line["Transcript_ID"], line["Start_phast_cons"].to_i, line["End_phast_cons"].to_i, line["PhastCons"].to_i
+  i += 1
+end
+
+
+File.open(sam_doc, 'r').each do |line|
+  line = line.split(" ")
+  next if line[2] == '*'
+  reference_name = line[2]
+  jumper = locator[reference_name]
+
+  if jumper
+    i = jumper
+
+    while reference_name == sheet1[i,0]
+
+      position_left = line[3].to_i
+      position_right = position_left + 100
+      pos_on_sequence = sheet1[i,1] - position_left
+
+      if within?(position_left, position_right, sheet1[i,1])
+        sheet1[i,6] += 1
+        sequence = line[9]
+        old_base = sheet1[i,2]
+        new_base = sheet1[i,3]
+
+        case
+        when old_base.length >= new_base.length
+          #### Deletion or SNP
+          actual_base = sequence[pos_on_sequence...pos_on_sequence+old_base.length]
+          sheet1[i,5] += 1 if actual_base != old_base
+
+        when old_base.length < new_base.length
+          #### Insertion
+          actual_base = sequence[pos_on_sequence...pos_on_sequence+new_base.length]
+          sheet1[i,5] += 1 if actual_base == new_base
+        end
+      end
+
+      i += 1
+    end
+
+  end
+end
+
+book.write xls_doc
