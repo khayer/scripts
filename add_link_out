@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby
+require 'spreadsheet'
+require 'csv'
+
+### Functions #######################################################
+#####################################################################
+
+def make_link(pos, location)
+  location = location.delete("chr")
+  pos_l = (pos - 10).to_s
+  pos_r = (pos + 10).to_s
+  link = "http://www.ensembl.org/Danio_rerio/Location/View?r=#{location}:#{pos_l}-#{pos_r}"
+end
+
+
+### Main ############################################################
+#####################################################################
+
+usage =<<EOF
+      #{$0} high_effect.csv  out.xls
+EOF
+
+if ARGV.length != 2
+  puts usage
+  exit
+end
+
+csv_doc = ARGV[0]
+xls_doc = ARGV[1]
+
+book = Spreadsheet::Workbook.new
+sheet1 = book.create_worksheet
+sheet1.row(0).push '#CHROM','POS','REF','ALT','QUAL', 'Allele Frequency', 'Read Depth', 'Impact', 'Effect', 'Codon Change', 'Gen Name'
+
+i = 1
+dummy = ""
+locator = Hash.new()
+
+File.open(csv_doc).each do |line|
+  line  = line.split("\t")
+  location = line[0]
+  #AC=2;AF=1.00;AN=2;BaseQRankSum=1.162;DP=31;Dels=0.00;FS=2.741;HRun=0;HaplotypeScore=0.0000;MQ=51.54;MQ0=0;MQRankSum=-0.473;QD=18.91;ReadPosRankSum=-2.109;SB=-245.55;SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
+  #SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
+  position = line[1].to_i
+  link = make_link(position, location)
+  info = line[7]
+  allele_frequency = info.split("AF=")[-1].split(";")[0].to_f
+  read_depth = info.split("DP=")[-1].split(";")[0].to_i
+  impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
+  gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
+  effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
+  codon_change = "-"
+  codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0] if effect == "NON_SYNONYMOUS_CODING"
+  puts info if codon_change == "-"
+
+  if dummy != location
+    dummy = location
+    locator[location] = i
+  end
+  sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change, gene_name
+  i += 1
+end
+
+
+book.write xls_doc

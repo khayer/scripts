@@ -41,7 +41,7 @@ CSV.open(ARGV[1], "wb") do |csv|
     genome_version = "-"
     alignments = "-"
     gene_title = dummy_gene_assignement[2]
-    gene_symbol = dummy_gene_assignement[1]
+    puts gene_symbol = dummy_gene_assignement[1]
     chromosomal_location = "-"
     unigene_cluster_type = "-"
     ensembl = "-"

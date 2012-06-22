@@ -41,12 +41,13 @@ end
 
 
 input = ARGV[0]
+name = input.split(/\W/)[-2]
 cutoff = ARGV[1].to_i()
 window_length = 50000
 
 
 location_lengths = get_location_lengths(input)
-puts "location\tstart\tend\t#_of_homozygot_snps"
+#puts "location\tstart\tend\t#_of_homozygot_snps"
 
 
 input_handle = File.open(input)
@@ -62,7 +63,7 @@ while !input_handle.eof?
 
   windows = Hash.new(0)
   location = line[0]
-  position = line[1].to_i()
+  position = line[1].to_i()-1
 
 
   while location == line[0] && !input_handle.eof?
@@ -74,17 +75,17 @@ while !input_handle.eof?
         windows[key] += 1 if line[-1] =~ /^1\/1/
       else
         number = windows.delete(key)
-        puts "#{location}\t#{key}\t#{key+window_length}\t#{number}" if number >= cutoff
+        puts "#{name}\t#{location}\t#{key}\t#{key+1}\t#{number}" if number >= cutoff
       end
     end
 
     line = input_handle.readline.split("\t")
-    position = line[1].to_i()
+    position = line[1].to_i()-1
   end
 
   windows.keys().each do |key|
     number = windows.delete(key)
-    puts "#{location}\t#{key}\t#{key+window_length}\t#{number}" if number >= cutoff
+    puts "#{name}\t#{location}\t#{key}\t#{key+1}\t#{number}" if number >= cutoff
   end
 
 
