@@ -85,6 +85,7 @@ while !input_handle.eof?
 
   windows.keys().each do |key|
     number = windows.delete(key)
+    key = key + window_length / 2
     puts "#{name}\t#{location}\t#{key}\t#{key+1}\t#{number}" if number >= cutoff
   end
 
