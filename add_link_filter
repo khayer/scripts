@@ -17,9 +17,9 @@ def make_link2(ensemble_id)
 end
 
 def get_score(location, pos, seg)
-  lower = pos - 2500
-  upper = pos + 2500
-  scores = `grep -w #{location} #{seg}| awk '$3 > lower {print $0}' | awk '$3 > upper {print $0}'`
+  lower = pos - 25000
+  upper = pos + 25000
+  scores = `grep -w #{location} #{seg}| awk '$3 > #{lower} {print $0}' | awk '$3 < #{upper} {print $0}'`
   highest = 0
   scores = scores.split("\n")
   scores.each do |line|

@@ -12,15 +12,34 @@ def make_link(pos, location)
   link = "http://www.ensembl.org/Danio_rerio/Location/View?r=#{location}:#{pos_l}-#{pos_r}"
 end
 
+def make_link2(ensemble_id)
+  link = "http://useast.ensembl.org/Danio_rerio/Gene/Summary?db=core;g=#{ensemble_id}"
+end
+
+def get_score(location, pos, seg)
+  lower = pos - 25000
+  upper = pos + 25000
+  #puts "grep -w #{location} #{seg}| awk '$3 > #{lower} {print $0}' | awk '$3 < #{upper} {print $0}'"
+  scores = `grep -w #{location} #{seg}| awk '$3 > #{lower} {print $0}' | awk '$3 < #{upper} {print $0}'`
+  highest = 0
+  scores = scores.split("\n")
+  #puts scores
+  #exit
+  scores.each do |line|
+    line = line.split("\t")
+    highest = line[-1].to_i if line[-1].to_i > highest
+  end
+  highest
+end
 
 ### Main ############################################################
 #####################################################################
 
 usage =<<EOF
-      #{$0} high_effect.csv  out.xls sample,name,s
+      #{$0} high_effect.csv  out.xls sample,name,s sample.seg
 EOF
 
-if ARGV.length != 3
+if ARGV.length != 4
   puts usage
   exit
 end
@@ -28,10 +47,11 @@ end
 csv_doc = ARGV[0]
 xls_doc = ARGV[1]
 sample_names = ARGV[2].split(",")
+seg = ARGV[3]
 
 book = Spreadsheet::Workbook.new
 sheet1 = book.create_worksheet
-sheet1.row(0).push '#CHROM','POS','REF','ALT','QUAL', 'Allele Frequency', 'Read Depth', 'Impact', 'Effect', 'Codon Change', 'Gen Name'
+sheet1.row(0).push '#CHROM','POS','REF','ALT','QUAL', 'Allele Frequency', 'Read Depth', 'Impact', 'Effect', 'Codon Change', 'Gen Name', 'Score'
 sample_names.each do |sample_name|
   sheet1.row(0).push "#{sample_name}_Genotype", "#{sample_name}_Read_Depth"
 end
@@ -56,18 +76,23 @@ File.open(csv_doc).each do |line|
   impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
   gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
   effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
+  ensemble_id = info.split("SNPEFF_TRANSCRIPT_ID=")[-1].split(";")[0]
+  link_ensemble_id = make_link2(ensemble_id)
   codon_change = "-"
   codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0] if effect == "NON_SYNONYMOUS_CODING"
   #puts info if codon_change == "-"
-
-  if dummy != location
-    dummy = location
-    locator[location] = i
-  end
-  sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change, gene_name
+  score = get_score(location,position,seg)
+  #if dummy != location
+  #  dummy = location
+  #  locator[location] = i
+  #end
+  #i -= 1 if impact == "MODIFIER"
+  sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change, Spreadsheet::Link.new(link_ensemble_id,gene_name), score
   sample_genotype = []
+  #puts line.join("\t")
   sample_names.each_with_index do |sample_name, index|
     sample_info = line[index+9]
+    #puts sample_info
     sample_info = "-:-" if sample_info == "./."
     sample_info = sample_info.split(":")
 
