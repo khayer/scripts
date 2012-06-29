@@ -16,28 +16,28 @@ def make_link2(ensemble_id)
   link = "http://useast.ensembl.org/Danio_rerio/Gene/Summary?db=core;g=#{ensemble_id}"
 end
 
-def get_score(location, pos, seg)
-  lower = pos - 25000
-  upper = pos + 25000
-  scores = `grep -w #{location} #{seg}| awk '$3 > #{lower} {print $0}' | awk '$3 < #{upper} {print $0}'`
-  highest = 0
-  scores = scores.split("\n")
-  scores.each do |line|
-    line = line.split("\t")
-    highest = line[-1].to_i if line[-1].to_i > highest
-  end
-  highest
-end
+#def get_score(location, pos, seg)
+#  lower = pos - 25000
+#  upper = pos + 25000
+#  scores = `grep -w #{location} #{seg}| awk '$3 > #{lower} {print $0}' | awk '$3 < #{upper} {print $0}'`
+#  highest = 0
+#  scores = scores.split("\n")
+#  scores.each do |line|
+#    line = line.split("\t")
+#    highest = line[-1].to_i if line[-1].to_i > highest
+#  end
+#  highest
+#end
 
 
 ### Main ############################################################
 #####################################################################
 
 usage =<<EOF
-      #{$0} high_effect.csv  out.xls sample,name,s sample.seg
+      #{$0} high_effect.csv  out.xls sample,name,s #sample.seg#
 EOF
 
-if ARGV.length != 4
+if ARGV.length != 3
   puts usage
   exit
 end
@@ -45,13 +45,13 @@ end
 csv_doc = ARGV[0]
 xls_doc = ARGV[1]
 sample_names = ARGV[2].split(",")
-seg = ARGV[3]
+#seg = ARGV[3]
 
 book = Spreadsheet::Workbook.new
 sheet1 = book.create_worksheet
-sheet1.row(0).push '#CHROM','POS','REF','ALT','QUAL', 'Allele Frequency', 'Read Depth', 'Impact', 'Effect', 'Codon Change', 'Gen Name', 'Score'
+sheet1.row(0).push '#CHROM','POS','REF','ALT','QUAL', 'Allele Frequency', 'Read Depth', 'Impact', 'Effect', 'Codon Change', 'Gen Name' #,'Score'
 sample_names.each do |sample_name|
-  sheet1.row(0).push "#{sample_name}_Genotype", "#{sample_name}_Read_Depth"
+  sheet1.row(0).push "#{sample_name}_Genotype", "#{sample_name}_Allele_Depth", "#{sample_name}_Read_Depth","#{sample_name}_GT_Quality","#{sample_name}_GT_Likelihood"
 end
 
 format1 = Spreadsheet::Format.new :weight => :bold
@@ -60,10 +60,14 @@ i = 1
 dummy = ""
 locator = Hash.new()
 number_of_samples = sample_names.length()
-
+location_first = "dummy"
 File.open(csv_doc).each do |line|
   line  = line.split("\t")
   location = line[0]
+  if location != location_first
+    puts location
+    location_first = location
+  end
   #AC=2;AF=1.00;AN=2;BaseQRankSum=1.162;DP=31;Dels=0.00;FS=2.741;HRun=0;HaplotypeScore=0.0000;MQ=51.54;MQ0=0;MQRankSum=-0.473;QD=18.91;ReadPosRankSum=-2.109;SB=-245.55;SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
   #SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
   position = line[1].to_i
@@ -89,7 +93,10 @@ File.open(csv_doc).each do |line|
   #end
   #sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change, gene_name
   sample_genotype = []
+  sample_allele_depth = []
   sample_read_depth = []
+  sample_genotype_quality = []
+  sample_likelihood = []
   sample_names.each_with_index do |sample_name, index|
     sample_info = line[index+9]
     sample_info = "-:-" if sample_info == "./."
@@ -97,27 +104,43 @@ File.open(csv_doc).each do |line|
 
 
     sample_genotype << sample_info[0]
-    sample_read_depth << sample_info[1]
+    sample_allele_depth << sample_info[1]
+    sample_read_depth << sample_info[2].to_i
+    sample_genotype_quality << sample_info[3].to_f
+    if sample_info[4]
+      sample_likelihood << sample_info[4]
+    else
+      sample_likelihood << "-"
+    end
   end
-  if (sample_genotype[0] == "1/1" && impact=="HIGH" && sample_genotype[0] != sample_genotype[1])
-    score = get_score(location,position,seg)
+  if (sample_genotype[0] == "1/1" && impact=="HIGH"  && !sample_genotype.values_at(1..-1).include?("1/1"))
+    #score = get_score(location,position,seg)
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :green, :color => :white
-    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_ensemble_id,gene_name), score
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_ensemble_id,gene_name)#, score
 
     sample_genotype.each_with_index do |genotype, index|
-      sheet1.row(i).push genotype, sample_read_depth[index]
+      sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index], sample_likelihood[index]
     end
 
     i += 1
-  end
 
-  if (sample_genotype[0] == "1/1" && sample_genotype[1] == "0/1")
-    score = get_score(location,position,seg)
-
-    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change, gene_name, score
+  elsif (sample_genotype[0] == "1/1" && impact=="MODERATE"  && !sample_genotype.values_at(1..-1).include?("1/1"))
+    #score = get_score(location,position,seg)
+    sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :orange, :color => :white
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_ensemble_id,gene_name)#, score
 
     sample_genotype.each_with_index do |genotype, index|
-      sheet1.row(i).push genotype, sample_read_depth[index]
+      sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index], sample_likelihood[index]
+    end
+
+    i += 1
+  elsif (sample_genotype[1] != sample_genotype[0]  && !sample_genotype.values_at(1..-1).include?("1/1") && !sample_genotype.values_at(1..-1).include?("0/1") && !sample_genotype.values_at(1..-1).include?("0/1") && (impact=="HIGH" || impact=="MODERATE"))
+    #score = get_score(location,position,seg)
+
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change, gene_name#, score
+
+    sample_genotype.each_with_index do |genotype, index|
+      sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index], sample_likelihood[index]
     end
 
     i += 1
