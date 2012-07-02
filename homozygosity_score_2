@@ -22,20 +22,6 @@ if ARGV.length != 2
 end
 
 # _ Functions _
-def get_location_lengths(filename)
-  location_lengths = Hash.new
-  File.open(filename).each do |line|
-    break if line =~ /^[\w]{2}/
-    next if !(line =~ /contig=<ID=/)
-
-    line = line.split(/\W/)
-    location_lengths[line[5]] = line[-1].to_i
-
-
-  end
-  location_lengths
-end
-
 
 # _ Functions end _
 
@@ -43,56 +29,58 @@ end
 input = ARGV[0]
 name = input.split(/\W/)[-2]
 sample_number = ARGV[1].to_i()
-window_length = 50000
-
-
-location_lengths = get_location_lengths(input)
-#puts "location\tstart\tend\t#_of_homozygot_snps"
-
+window_length = 2500
 
 input_handle = File.open(input)
 line = input_handle.readline()
-next_pos = input_handle.pos
-
 k = []
-(0..5000).each do |i|
+i = 0
+
+while i < window_length
   info = line.split("\t")[sample_number]
   if info != "./."
     info = info.split(":")
     all_reads = info[1].split(",")[1].to_f + info[1].split(",")[0].to_f
     mutated_reads = info[1].split(",")[1].to_f
     frequency = mutated_reads/all_reads.to_f
-    if frequency > 0.5 && info[2].to_i > 30 && info[3].to_i > 50
+    if frequency > 0.5 && info[2].to_i > 20 && info[3].to_i > 80
       k << frequency
+      i += 1
     end
   end
+
   line = input_handle.readline()
 end
 
 
-while input_handle.lineno < (199496 - 5000)
+last_position = line.split("\t")[1]
+dummy = true
+i = 1
+while !input_handle.eof?()
 
-  k = k.sort()
-  #puts k.length/2
-  if k[k.length/2]
-    puts k[k.length/2]
-  else
-    puts "0.5"
-  end
-  #puts k[k.length/2]
-
-  k.delete_at(0)
-  line = input_handle.readline()
   info = line.split("\t")[sample_number]
   if info != "./."
     info = info.split(":")
     all_reads = info[1].split(",")[1].to_f + info[1].split(",")[0].to_f
     mutated_reads = info[1].split(",")[1].to_f
     frequency = mutated_reads/all_reads.to_f
-    if frequency > 0.5 && info[2].to_i > 30 && info[3].to_i > 50
+    if frequency > 0.5 && info[2].to_i > 20 && info[3].to_i > 80
+
+      #STDERR.puts frequency
+      z = k.sort()
+      #puts k.length/2
+      position = line.split("\t")[1]
+      puts "#{last_position}\t#{z[z.length/2]}"
+      last_position = position
+      i += 1
+      dummy = false
+      k.delete_at(0)
       k << frequency
+      #dummy = true
     end
   end
+
+  line = input_handle.readline()
 
 
 end
