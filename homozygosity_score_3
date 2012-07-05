@@ -29,7 +29,7 @@ end
 input = ARGV[0]
 name = input.split(/\W/)[-2]
 sample_number = ARGV[1].to_i()
-window_length = 2000
+window_length = 5000
 
 input_handle = File.open(input)
 line = input_handle.readline()
@@ -37,64 +37,50 @@ while line =~ /^#/
   line = input_handle.readline()
 end
 k = []
-positions = []
 i = 0
-counter = 0
+
 while i < window_length
-  #STDERR.puts line
   info = line.split("\t")[sample_number]
-  #STDERR.puts info
-  if !(info =~ /\.\/\./)
-    counter += 1
-    #STDERR.puts info
+  if info != "./."
     info = info.split(":")
     all_reads = info[1].split(",")[1].to_f + info[1].split(",")[0].to_f
     mutated_reads = info[1].split(",")[1].to_f
     frequency = mutated_reads/all_reads.to_f
-    if frequency > 0.5 && info[2].to_i > 10 && info[3].to_i > 75
-      #STDERR.puts info.join(":")
-      #STDERR.puts frequency
+    if frequency > 0.5 && info[2].to_i > 10 && info[3].to_i > 40
       k << frequency
       i += 1
-      positions << line.split("\t")[1]
     end
   end
-  #STDERR.puts i
+
   line = input_handle.readline()
 end
 
 
-#last_position = line.split("\t")[1]
+last_position = line.split("\t")[1]
 dummy = true
 i = 1
 number = 0
 while !input_handle.eof?()
 
   info = line.split("\t")[sample_number]
-  if !(info =~ /\.\/\./)
+  if info != "./."
     info = info.split(":")
     all_reads = info[1].split(",")[1].to_f + info[1].split(",")[0].to_f
     mutated_reads = info[1].split(",")[1].to_f
     frequency = mutated_reads/all_reads.to_f
-    counter += 1
-    if frequency > 0.5 && info[2].to_i > 10 && info[3].to_i > 75
+    if frequency > 0.5 && info[2].to_i > 10 && info[3].to_i > 40
 
       #STDERR.puts frequency
       z = k.sort()
       #puts k.length/2
-      positions << line.split("\t")[1]
-      position = positions.delete_at(0)
-      #STDERR.puts position
-
-      #puts "#{position}\t#{z[z.length/2]}"
+      position = line.split("\t")[1]
       if number == 2
-        puts "#{position}\t#{z[z.length/2]}"
+        puts "#{last_position}\t#{z[z.length/2]}"
         number = 0
       else
         number += 1
       end
-      #exit
-      #last_position = position
+      last_position = position
       i += 1
       dummy = false
       k.delete_at(0)
@@ -108,6 +94,4 @@ while !input_handle.eof?()
 
 
 end
-
-STDERR.puts counter
 
