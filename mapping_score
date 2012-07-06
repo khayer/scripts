@@ -1,0 +1,150 @@
+#!/usr/bin/env ruby
+
+usage =<<EOF
+
+  #{$0} combined.vcf target_pos mut_strand_pos wt_strand_pos
+ -----------------------------------------
+  Mapping Score is definied as:
+    #homo/#hetero X #MutationStrand/#WTStrand
+    in a 50kB window
+
+  format out:
+
+  position score
+  ...
+  500000 50
+  500001 50
+  500002 51
+  ...
+EOF
+
+# Functions:
+
+def mapping_score(number_homo, number_hetero,number_mutation_strand,
+  number_wt_strand)
+  number_hetero = 1 if number_hetero == 0
+  number_wt_strand = 1 if number_wt_strand == 0
+  (number_homo/number_hetero).to_f*(number_mutation_strand/number_wt_strand).to_f
+end
+
+# Main:
+
+combined_vcf = ARGV[0]
+target_pos = ARGV[1].to_i
+mut_strand_pos = ARGV[2].to_i
+wt_strand_pos = ARGV[3].to_i
+i = 0
+mut = 0
+wik = 0
+sample = 0
+window_size = 50000
+window_first = window_size
+window_second = window_size/2
+
+number_homo_first_window = 0
+number_homo_second_window = 0
+number_hetero_first_window = 0
+number_hetero_second_window = 0
+number_mut_strand_first_window = 0
+number_mut_strand_second_window = 0
+number_wt_strand_first_window = 0
+number_wt_strand_second_window = 0
+#first_window = [0,0,0,0]
+#second_window = [0,0,0,0]
+dummy = false
+state = "nothing"
+File.open(combined_vcf).each do |line|
+  next if line =~ /^#/
+  line.chomp!
+  line = line.split("\t")
+  target_info = line[target_pos]
+  next if target_info =~ /\.\/\./
+  next if target_info =~ /0\/0/
+  target_info = target_info.split(":")
+  next if target_info[2].to_i < 10
+  next if target_info[3].to_i < 75
+  target_info.join("\t")
+  sample += 1
+  #exit if sample == 500
+  mut_stand_info = line[mut_strand_pos]
+  wt_strand_info = line[wt_strand_pos]
+  position = line[1].to_i
+
+  if position > window_second
+    state = "second_done"
+  end
+  if position > window_first
+    state = "first_done"
+  end
+
+
+
+  case state
+   when "second_done"
+    i = i+1
+    #STDERR.puts "HERE"
+
+    score = mapping_score(number_homo_second_window.to_f,
+      number_hetero_second_window.to_f, number_mut_strand_second_window.to_f,
+      number_wt_strand_second_window.to_f)
+
+    number_homo_second_window = 0
+    number_hetero_second_window = 0
+    number_mut_strand_second_window = 0
+    number_wt_strand_second_window = 0
+
+    if dummy
+      puts "#{window_second}\t#{score}"
+      window_second +=window_size
+
+    else
+      window_second +=window_size
+      dummy = true
+    end
+
+   when "first_done"
+    i = 0
+    #STDERR.puts "Here"
+    #STDERR.puts number_homo_second_window.to_s+"\t"+ number_hetero_first_window.to_s
+    score = mapping_score(number_homo_first_window.to_f,
+      number_hetero_first_window.to_f, number_mut_strand_first_window.to_f,
+      number_wt_strand_first_window.to_f)
+    #score = 0 if score == "NaN"
+    #score = 300 if score == "Infinity"
+    number_homo_first_window = 0
+    number_hetero_first_window = 0
+    number_mut_strand_first_window = 0
+    number_wt_strand_first_window = 0
+    puts "#{window_first}\t#{score}"
+    window_first += window_size
+    #exit
+   end
+  state = "nothing"
+
+
+  if target_info[0] == "1/1" || target_info[0] == "2/2"
+    number_homo_first_window += 1
+    number_homo_second_window += 1
+    if (wt_strand_info =~ /1\/1/ || wt_strand_info =~ /2\/2/) && wt_strand_info.split(":")[3].to_i > 25
+      number_wt_strand_first_window += 1
+      number_wt_strand_second_window += 1
+      wik += 1
+    end
+    if (mut_stand_info =~ /1\/1/ || mut_stand_info =~ /2\/2/) && mut_stand_info.split(":")[3].to_i > 25
+      number_mut_strand_first_window += 1
+      number_mut_strand_second_window += 1
+      mut += 1
+    end
+  else
+    number_hetero_first_window += 1
+    number_hetero_second_window += 1
+
+  end
+
+
+  #STDERR.puts wt_strand_info + "\t" + number_wt_strand_first_window.to_s
+  #STDERR.puts mut_stand_info + "\t" + number_mut_strand_first_window.to_s
+
+end
+
+STDERR.puts "Wik: #{wik}    TLF: #{mut}   Sample: #{sample}"

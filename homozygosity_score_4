@@ -44,14 +44,17 @@ while i < window_length
   #STDERR.puts line
   info = line.split("\t")[sample_number]
   #STDERR.puts info
-  if !(info =~ /\.\/\./)  && !(info =~ /0\/0/)
+  if !(info =~ /\.\/\./) && !(info =~ /0\/0/)
     counter += 1
     #STDERR.puts info
     info = info.split(":")
     all_reads = info[1].split(",")[1].to_f + info[1].split(",")[0].to_f
     mutated_reads = info[1].split(",")[1].to_f
     frequency = mutated_reads/all_reads.to_f
-    if frequency > 0 && info[2].to_i > 10 && info[3].to_i > 75
+    frequency = 0.5 if frequency < 0.9
+    frequency = 1 if frequency > 0.5
+    frequency = 0.5 if frequency != 1.0 && frequency != 0.5
+    if info[2].to_i > 10 && info[3].to_i > 75
       #STDERR.puts info.join(":")
       #STDERR.puts frequency
       k << frequency
@@ -71,35 +74,45 @@ number = 0
 while !input_handle.eof?()
 
   info = line.split("\t")[sample_number]
-  if !(info =~ /\.\/\./)  && !(info =~ /0\/0/)
+  if !(info =~ /\.\/\./) && !(info =~ /0\/0/)
     info = info.split(":")
     all_reads = info[1].split(",")[1].to_f + info[1].split(",")[0].to_f
     mutated_reads = info[1].split(",")[1].to_f
     frequency = mutated_reads/all_reads.to_f
     counter += 1
-    if frequency > 0 && info[2].to_i > 10 && info[3].to_i > 75
+    frequency = 0.5 if frequency < 0.9
+    frequency = 1 if frequency > 0.5
+    frequency = 0.5 if frequency != 1.0 && frequency != 0.5
+    if info[2].to_i > 10 && info[3].to_i > 75
 
       #STDERR.puts frequency
-      z = k.sort()
+      z = k.sort
+      #STDERR.puts z.length
+      #STDERR.puts k.length
+      #STDERR.puts k.join("...")
+      mean = z.inject{ |sum, el| sum + el }.to_f / k.length
       #puts k.length/2
+      #STDERR.puts "#{positions[0]}\t#{positions[window_length-1]}"
       positions << line.split("\t")[1]
       position = positions.delete_at(0)
       #STDERR.puts position
 
-      #puts "#{position}\t#{z[z.length/2]}"
-      if number == 2
-        puts "#{position}\t#{z[z.length/2]}"
-        number = 0
-      else
-        number += 1
-      end
+      puts "#{position}\t#{z[z.length/2]}"
+      #if number == 2
+      #  puts "#{position}\t#{mean}"
+      #  number = 0
+      #else
+      #  number += 1
+      #end
       #exit
       #last_position = position
+
       i += 1
       dummy = false
       k.delete_at(0)
       k << frequency
       #dummy = true
+
     end
   end
 
@@ -110,4 +123,3 @@ while !input_handle.eof?()
 end
 
 STDERR.puts counter
-
