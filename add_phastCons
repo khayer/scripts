@@ -13,14 +13,32 @@ phast_cons = File.open(ARGV[1],'r')
 line_cons = phast_cons.readline.split(" ")
 random = (rand*10000).floor
 tmp_file = "tmp#{random}"
-
+File.new(tmp_file, 'w')
+current_location = "dummy"
 vcf.each do |line|
-  line = line.split(" ")
-  current_location = line[0]
+  line = line.chomp()
+  if line =~ /^#/
+    puts line
+    next
+  end
 
+  line = line.split(" ")
+  if current_location == line[0]
+    line << "-"
+    line << "-"
+    line << "-"
+    puts line.join("\t")
+    # STDERR.puts "here"
+    next
+  end
+  current_location = line[0]
+  #puts current_location
+  #STDERR.puts "UPS #{line[0]}"
+  #STDERR.puts line.join("/t")
   `grep -w #{current_location} #{ARGV[1]} > #{tmp_file}`
   tmp = File.open(tmp_file,'r')
   line_cons = tmp.readline().split(" ")
+
   while current_location == line_cons[1] && !tmp.eof? && !vcf.eof?
     right_border = line_cons[2].to_i
     left_border = line_cons[3].to_i
@@ -33,13 +51,23 @@ vcf.each do |line|
       line << left_border
       line << line_cons[5]
       puts line.join("\t") + "\n"
-      line = vcf.readline().split(" ")
+      line = vcf.readline().chomp().split(" ")
       current_location = line[0]
     when current_position < right_border
-      line = vcf.readline().split(" ")
+      line << "-"
+      line << "-"
+      line << "-"
+      puts line.join("\t")
+      line = vcf.readline().chomp().split(" ")
       current_location = line[0]
     when current_position > left_border
+
       line_cons = tmp.readline.split(" ")
     end
   end
+  line << "-"
+  line << "-"
+  line << "-"
+  puts line.join("\t")
+
 end

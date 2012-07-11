@@ -49,7 +49,7 @@ sample_names = ARGV[2].split(",")
 
 book = Spreadsheet::Workbook.new
 sheet1 = book.create_worksheet
-sheet1.row(0).push '#CHROM','POS','REF','ALT',  'Read Depth', 'Impact', 'Effect', 'Codon Change', 'Gen Name' #,'Score'
+sheet1.row(0).push '#CHROM','POS','REF','ALT','Read Depth', 'Impact', 'Effect', 'Codon Change', 'Gen Name','Phast Cons','PC-Start','PC-End' #,'Score'
 sample_names.each do |sample_name|
   sheet1.row(0).push "#{sample_name}_Genotype", "#{sample_name}_Allele_Depth", "#{sample_name}_Read_Depth","#{sample_name}_GT_Quality"
 end
@@ -73,6 +73,9 @@ File.open(csv_doc).each do |line|
   position = line[1].to_i
   link = make_link(position, location)
   info = line[7]
+  phast_cons = line[-1]
+  phast_start = line[-3]
+  phast_end = line[-2]
   allele_frequency = info.split("AF=")[-1].split(";")[0].to_f
   read_depth = info.split("DP=")[-1].split(";")[0].to_i
   impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
@@ -116,7 +119,7 @@ File.open(csv_doc).each do |line|
   if (sample_genotype[0] == "1/1" && impact=="HIGH"  && !sample_genotype.values_at(1..-1).include?("1/1"))
     #score = get_score(location,position,seg)
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :green, :color => :white
-    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_ensemble_id,gene_name)#, score
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_ensemble_id,gene_name),phast_cons, phast_start,phast_end #, score
 
     sample_genotype.each_with_index do |genotype, index|
       sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index]
@@ -127,7 +130,7 @@ File.open(csv_doc).each do |line|
   elsif (sample_genotype[0] == "1/1" && impact=="MODERATE"  && !sample_genotype.values_at(1..-1).include?("1/1"))
     #score = get_score(location,position,seg)
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :orange, :color => :white
-    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_ensemble_id,gene_name)#, score
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_ensemble_id,gene_name),phast_cons, phast_start,phast_end#, score
 
     sample_genotype.each_with_index do |genotype, index|
       sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index]
@@ -137,7 +140,7 @@ File.open(csv_doc).each do |line|
   elsif (sample_genotype[1] != sample_genotype[0]  && !sample_genotype.values_at(1..-1).include?("1/1") && !sample_genotype.values_at(1..-1).include?("0/1") && !sample_genotype.values_at(1..-1).include?("0/1") && (impact=="HIGH" || impact=="MODERATE"))
     #score = get_score(location,position,seg)
 
-    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change, gene_name#, score
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_ensemble_id,gene_name),phast_cons, phast_start,phast_end#, score
 
     sample_genotype.each_with_index do |genotype, index|
       sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index]
