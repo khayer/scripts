@@ -2,7 +2,7 @@
 
 usage =<<EOF
 
-  #{$0} input.vcf sample_number [stdout]
+  #{$0} input.vcf sample_number control_number [stdout]
  -----------------------------------------
   only report #_of_homozygot_snps > cutoff
 
@@ -16,7 +16,7 @@ usage =<<EOF
   ...
 EOF
 
-if ARGV.length != 2
+if ARGV.length != 3
   puts usage
   exit
 end
@@ -29,7 +29,8 @@ end
 input = ARGV[0]
 name = input.split(/\W/)[-2]
 sample_number = ARGV[1].to_i()
-window_length = 250
+control_number = ARGV[2].to_i + 8
+window_length = 50
 
 input_handle = File.open(input)
 line = input_handle.readline()
@@ -43,6 +44,8 @@ counter = 0
 while i < window_length
   #STDERR.puts line
   info = line.split("\t")[sample_number]
+  info_control = line[control_number].split(":")
+
   #STDERR.puts info
   if !(info =~ /\.\/\./) && !(info =~ /0\/0/)
     counter += 1
@@ -51,10 +54,12 @@ while i < window_length
     all_reads = info[1].split(",")[1].to_f + info[1].split(",")[0].to_f
     mutated_reads = info[1].split(",")[1].to_f
     frequency = mutated_reads/all_reads.to_f
-    frequency = 0.5 if frequency < 0.75
+    frequency = 0.5 if frequency < 0.8
     frequency = 1 if frequency > 0.5
     frequency = 0.5 if frequency != 1.0 && frequency != 0.5
-    if info[2].to_i > 5 && info[3].to_i > 50
+    if info[2].to_i > 10 && info[3].to_i > 50 &&
+      !(info_control[0] =~ /1\/1/ && !(info[0] =~ /2\/2/) && info[3].to_f >= 10.0) &&
+      !(info_control[0] == info[0] &&  info[3].to_f >= 10.0)
       #STDERR.puts info.join(":")
       #STDERR.puts frequency
       k << frequency
@@ -76,16 +81,20 @@ storage_done = Hash.new
 while !input_handle.eof?()
 
   info = line.split("\t")[sample_number]
+  info_control = line[control_number].split(":")
+
   if !(info =~ /\.\/\./) && !(info =~ /0\/0/)
     info = info.split(":")
     all_reads = info[1].split(",")[1].to_f + info[1].split(",")[0].to_f
     mutated_reads = info[1].split(",")[1].to_f
     frequency = mutated_reads/all_reads.to_f
     counter += 1
-    frequency = 0.5 if frequency < 0.75
-    frequency = 1.0 if frequency > 0.5
+    frequency = 0.5 if frequency < 0.8
+    frequency = 1 if frequency > 0.5
     frequency = 0.5 if frequency != 1.0 && frequency != 0.5
-    if info[2].to_i > 5 && info[3].to_i > 50
+    if info[2].to_i > 10 && info[3].to_i > 50 &&
+      !(info_control[0] =~ /1\/1/ && !(info[0] =~ /2\/2/) && info[3].to_f >= 10.0) &&
+      !(info_control[0] == info[0] &&  info[3].to_f >= 10.0)
 
       #STDERR.puts frequency
       z = k.sort
