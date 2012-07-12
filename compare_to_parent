@@ -1,0 +1,125 @@
+#!/usr/bin/env ruby
+
+usage =<<EOF
+
+  #{$0} input.vcf parent.vcf sample_number [stdout]
+ -----------------------------------------
+
+  format out:
+
+  location  #all_mutations  #AB  #TLF #TUG #WKG
+  123       123             12   9    15   12
+EOF
+
+if ARGV.length != 3
+  puts usage
+  exit
+end
+
+# _ Functions _
+
+#def frequency(mutated_reads,all_reads)
+#  frequency = mutated_reads/all_reads.to_f
+#  #frequency = 0.5 if frequency < 0.85
+#  #frequency = 1.0 if frequency > 0.5
+#  #frequency = 0.5 if frequency != 1.0 && frequency != 0.5
+#  frequency.to_f
+#  #frequency = 0.5 if frequency < 0.5
+#
+#end
+#
+def snp_exist?(info)
+  !(info =~ /\.\/\./) && !(info =~ /0\/0/)
+end
+
+def snp_homo?(info)
+  (info =~ /1\/1/) || (info =~ /2\/2/) || (info =~ /3\/3/)
+end
+
+def snp_unique?(parent_info, total_number)
+  homozygous = Array.new(0)
+  #puts parent_info
+  parent_info.each do |key,info|
+    #puts key
+    #puts info
+    info = info.split(":")
+    homozygous[key] = 1 if snp_homo?(info[0]) && info[3].to_f > 5.0
+  end
+  if homozygous.index(1) == homozygous.rindex(1) && homozygous.index(1) != nil
+    #puts homozygous.index(1)
+    total_number[homozygous.index(1)] += 1
+  end
+  total_number
+end
+
+#
+#def snp_unique?(line,info,control_numbers)
+#  snp_unique = true
+#  control_numbers.each do |control_number|
+#    info_control = line.split("\t")[control_number].split(":")
+#    snp_unique = snp_unique && info[2].to_i > 10 && info[3].to_i > 75 &&
+#      ( !(info_control[0] =~ /1\/1/) && !(info[0] =~ /2\/2/) && info[3].to_f >= 70.0) &&
+#      ( !(info_control[0] == info[0]) &&  info[3].to_f >= 70.0)
+#    break if !snp_unique
+#  end
+#  snp_unique
+#end
+
+
+
+# _ Main _
+
+# Set Parameters
+input = ARGV[0]
+parent = ARGV[1]
+sample_number = ARGV[2].to_i + 8
+
+
+
+
+handle_parent = File.open(parent)
+line_parent = handle_parent.readline()
+while line_parent =~ /^#/
+  line_parent = handle_parent.readline().chomp()
+end
+total_number = Array.new(5,0)
+line_parent = line_parent.split("\t")
+
+#CHROM  POS ID  REF ALT QUAL  FILTER  INFO  FORMAT  AB  TLF TUG WKG
+File.open(input).each do |line|
+  next if line =~ /^#/
+  #puts line
+  line = line.chomp().split("\t")
+  sample_info = line[sample_number].split(":")
+  next if !snp_exist?(sample_info[0])
+  next if !snp_homo?(sample_info[0])
+  next if sample_info[2].to_i < 10 || sample_info[3].to_f < 50
+  total_number[0] += 1
+
+  # Compare position
+  while line_parent[1].to_i < line[1].to_i
+    line_parent = handle_parent.readline().chomp().split("\t")
+  end
+
+  if line_parent[1].to_i == line[1].to_i
+    #puts line.join("\t")
+    #puts line_parent.join("\t")
+    #puts total_number.join("\t")
+    #puts line_parent
+    parent_info = Hash.new
+    (9..12).each do  |i|
+      next if !snp_exist?(line_parent[i])
+      parent_info.store(i-8,line_parent[i])
+    end
+    total_number = snp_unique?(parent_info, total_number)
+
+    #puts total_number.join("\t")
+    #STDIN.gets
+  end
+end
+
+puts "#all_mutations\t#AB\t#TLF\t#TUG\t#WKG"
+puts total_number.join("\t")
+
+
+

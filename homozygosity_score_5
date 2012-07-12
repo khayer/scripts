@@ -29,7 +29,7 @@ def frequency(mutated_reads,all_reads)
   #frequency = 1.0 if frequency > 0.5
   #frequency = 0.5 if frequency != 1.0 && frequency != 0.5
   frequency.to_f
-  frequency = 0.5 if frequency < 0.5
+  #frequency = 0.5 if frequency < 0.5
 
 end
 
@@ -57,7 +57,7 @@ end
 input = ARGV[0]
 sample_number = ARGV[1].to_i() + 8
 control_numbers = ARGV[2].split(",").map {|ele| ele.to_i + 8}
-window_length = 500
+window_length = 1000
 
 # Skip Header
 input_handle = File.open(input)
@@ -90,7 +90,7 @@ while i < window_length
     freq = num_mut_reads / num_all_reads
     #freq = frequency(mutated_reads,all_reads).to_f
 
-    if snp_unique?(line,info,control_numbers)
+    if  snp_unique?(line,info,control_numbers)
 
       frequencies << freq
       i += 1
@@ -120,9 +120,9 @@ while !input_handle.eof?()
     freq = num_mut_reads / num_all_reads
     counter += 1
 
-    if snp_unique?(line,info,control_numbers)
+    if  snp_unique?(line,info,control_numbers)
       z = frequencies.sort
-      mean = z.inject{ |sum, el| sum + el }.to_f / frequencies.length
+      #mean = z.inject{ |sum, el| sum + el }.to_f / frequencies.length
       positions << line.split("\t")[1].to_i
 
       position = positions.delete_at(0)

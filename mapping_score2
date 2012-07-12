@@ -2,10 +2,10 @@
 
 usage =<<EOF
 
-  #{$0} combined.vcf target_pos mut_strand_pos wt_strand_pos
+  #{$0} combined.vcf parents.vcf target_pos mut_strand_pos wt_strand_pos
  -----------------------------------------
   Mapping Score is definied as:
-    #homo/#hetero X #MutationStrand/#WTStrand
+    (#homo/ X #MutationStrand) / (#heteroX#WTStrand)
     in a 50kB window
 
   format out:
@@ -24,22 +24,55 @@ def mapping_score(number_homo, number_hetero,number_mutation_strand,
   number_wt_strand)
   number_hetero = 1 if number_hetero == 0
   number_wt_strand = 1 if number_wt_strand == 0
-  (number_homo/number_hetero).to_f*(number_mutation_strand/number_wt_strand).to_f
+  (number_homo.to_f*number_mutation_strand.to_f) / (number_hetero.to_f*number_wt_strand.to_f)
 end
 
-# Main:
+def snp_exist?(info)
+  !(info =~ /\.\/\./) && !(info =~ /0\/0/)
+end
+
+def snp_homo?(info)
+  (info =~ /1\/1/) || (info =~ /2\/2/) || (info =~ /3\/3/)
+end
+
+def snp_unique?(parent_info, total_number)
+  homozygous = Array.new(0)
+  parent_info.each do |key,info|
+    info = info.split(":")
+    homozygous[key] = 1 if snp_homo?(info[0]) && info[3].to_f > 5.0
+  end
+  if homozygous.index(1) == homozygous.rindex(1) && homozygous.index(1) != nil
+    total_number[homozygous.index(1)] += 1
+  end
+  total_number
+end
+
+# _ Main _:
+if ARGV.length != 5
+  puts usage
+  exit
+end
 
 combined_vcf = ARGV[0]
-target_pos = ARGV[1].to_i
-mut_strand_pos = ARGV[2].to_i
-wt_strand_pos = ARGV[3].to_i
+parent_vcf = ARGV[1]
+target_pos = ARGV[2].to_i + 8
+mut_strand_pos = ARGV[3].to_i + 8
+wt_strand_pos = ARGV[4].to_i + 8
 i = 0
 mut = 0
 wik = 0
 sample = 0
-window_size = 50000
+window_size = 1000000
 window_first = window_size
 window_second = window_size/2
+
+handle_parent = File.open(parent_vcf)
+line_parent = handle_parent.readline()
+while line_parent =~ /^#/
+  line_parent = handle_parent.readline().chomp()
+end
+total_number = Array.new(5,0)
+line_parent = line_parent.split("\t")
 
 number_homo_first_window = 0
 number_homo_second_window = 0
@@ -49,8 +82,7 @@ number_mut_strand_first_window = 0
 number_mut_strand_second_window = 0
 number_wt_strand_first_window = 0
 number_wt_strand_second_window = 0
-#first_window = [0,0,0,0]
-#second_window = [0,0,0,0]
+
 dummy = false
 state = "nothing"
 File.open(combined_vcf).each do |line|
@@ -66,9 +98,33 @@ File.open(combined_vcf).each do |line|
   target_info.join("\t")
   sample += 1
   #exit if sample == 500
-  mut_stand_info = line[mut_strand_pos]
-  wt_strand_info = line[wt_strand_pos]
+  #mut_stand_info = line[mut_strand_pos]
+  #wt_strand_info = line[wt_strand_pos]
   position = line[1].to_i
+
+  # Compare position
+  while line_parent[1].to_i < line[1].to_i
+    line_parent = handle_parent.readline().chomp().split("\t")
+  end
+
+  if line_parent[1].to_i == line[1].to_i
+    #puts line.join("\t")
+    #puts line_parent.join("\t")
+    #puts total_number.join("\t")
+    #puts line_parent
+    parent_info = Hash.new
+    (9..12).each do  |i|
+      next if !snp_exist?(line_parent[i])
+      parent_info.store(i-8,line_parent[i])
+    end
+    total_number = snp_unique?(parent_info, total_number)
+
+    #puts total_number.join("\t")
+    #STDIN.gets
+  end
+
+
+
 
   if position > window_second
     state = "second_done"
