@@ -2,10 +2,14 @@
 
 usage =<<EOF
 
-  #{$0} combined.vcf parents.vcf target_pos mut_strand_pos wt_strand_pos reference_pos
+  #{$0} combined.vcf parents.vcf target_pos mut_strand_pos wt_strand_pos
  -----------------------------------------
   Mapping Score is definied as:
-    (#homo/ X #MutationStrand) / (#heteroX#WTStrand)
+    (A / B) * (C / D)
+    A = homozygous all
+    B = heterozygous all
+    C = homozygous_unique tue
+    D = homozygous_unique ab
     in a 50kB window
 
   format out:
@@ -24,7 +28,7 @@ def mapping_score(number_homo, number_hetero,number_mutation_strand,
   number_wt_strand)
   number_hetero = 1 if number_hetero == 0
   number_wt_strand = 1 if number_wt_strand == 0
-  (number_homo.to_f*number_mutation_strand.to_f) / (number_hetero.to_f*number_wt_strand.to_f)
+  (number_homo.to_f/number_hetero.to_f)* (number_mutation_strand.to_f / number_wt_strand.to_f)
 end
 
 def snp_exist?(info)
@@ -48,7 +52,7 @@ def snp_unique?(parent_info, total_number)
 end
 
 # _ Main _:
-if ARGV.length != 6
+if ARGV.length != 5
   puts usage
   exit
 end
@@ -58,7 +62,7 @@ parent_vcf = ARGV[1]
 target_pos = ARGV[2].to_i + 8
 mut_strand_pos = ARGV[3].to_i + 8
 wt_strand_pos = ARGV[4].to_i + 8
-reference_pos = ARGV[5].to_i + 8
+#reference_pos = ARGV[5].to_i + 8
 i = 0
 mut = 0
 wik = 0
@@ -103,14 +107,14 @@ File.open(combined_vcf).each do |line|
   #mut_stand_info = line[mut_strand_pos]
   #wt_strand_info = line[wt_strand_pos]
   position = line[1].to_i
-  reference_info = line[reference_pos]
-  if snp_homo?(target_info[0]) && snp_homo?(reference_info)
-    reference_info = reference_info.split(":")
-    if reference_info[3].to_f > 40
-      doubled += 1
-      next
-    end
-  end
+  #reference_info = line[reference_pos]
+  #if snp_homo?(target_info[0]) && snp_homo?(reference_info)
+  #  reference_info = reference_info.split(":")
+  #  if reference_info[3].to_f > 40
+  #    doubled += 1
+  #    next
+  #  end
+  #end
   # Compare position
   while line_parent[1].to_i < line[1].to_i
     line_parent = handle_parent.readline().chomp().split("\t")
@@ -205,7 +209,7 @@ File.open(combined_vcf).each do |line|
       number_mut_strand_first_window += 1
       number_mut_strand_second_window += 1
       mut += 1
-  elsif !homozygous.include?(1)
+  elsif !snp_homo?(target_info[0]) #homozygous.include?(1)
     number_hetero_first_window += 1
     number_hetero_second_window += 1
   end
