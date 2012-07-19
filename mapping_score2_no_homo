@@ -5,8 +5,8 @@ usage =<<EOF
   #{$0} combined.vcf parents.vcf target_pos mut_strand_pos wt_strand_pos
  -----------------------------------------
   Mapping Score is definied as:
-    (A / B) * (C / D)
-    A = homozygous all
+    C / (B*D)
+    #A = homozygous all
     B = heterozygous all
     C = homozygous_unique tue
     D = homozygous_unique ab
@@ -28,7 +28,8 @@ def mapping_score(number_homo, number_hetero,number_mutation_strand,
   number_wt_strand)
   number_hetero = 1 if number_hetero == 0
   number_wt_strand = 1 if number_wt_strand == 0
-  (number_homo.to_f/number_hetero.to_f)* (number_mutation_strand.to_f / number_wt_strand.to_f)
+  #(number_homo.to_f/number_hetero.to_f)* (number_mutation_strand.to_f / number_wt_strand.to_f)
+  number_mutation_strand.to_f / (number_hetero.to_f* number_wt_strand.to_f)
 end
 
 def snp_exist?(info)
@@ -199,17 +200,19 @@ File.open(combined_vcf).each do |line|
     number_homo_first_window += 1
     number_homo_second_window += 1
   end
-  if snp_homo?(target_info[0]) && homozygous[wt_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
+  #if snp_homo?(target_info[0]) && homozygous[wt_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
+  if homozygous[wt_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
   #if (wt_strand_info =~ /1\/1/ || wt_strand_info =~ /2\/2/) && wt_strand_info.split(":")[3].to_i > 25
     number_wt_strand_first_window += 1
     number_wt_strand_second_window += 1
     wik += 1
-  elsif snp_homo?(target_info[0]) && homozygous[mut_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
+  #elsif snp_homo?(target_info[0]) && homozygous[mut_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
+  elsif homozygous[mut_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
     #if (mut_stand_info =~ /1\/1/ || mut_stand_info =~ /2\/2/) && mut_stand_info.split(":")[3].to_i > 25
       number_mut_strand_first_window += 1
       number_mut_strand_second_window += 1
       mut += 1
-  elsif !snp_homo?(target_info[0]) #homozygous.include?(1)
+  elsif !snp_homo?(target_info[0]) && !homozygous.include?(1)
     number_hetero_first_window += 1
     number_hetero_second_window += 1
   end

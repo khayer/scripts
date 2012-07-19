@@ -2,15 +2,14 @@
 
 usage =<<EOF
 
-  #{$0} combined.vcf parents.vcf target_pos mut_strand_pos wt_strand_pos
+  #{$0} combined.vcf parents.vcf target_pos mut_strand_pos wt_strand_pos control_pos
  -----------------------------------------
   Mapping Score is definied as:
-    (A / B) * (C / D)
-    A = homozygous all
-    B = heterozygous all
-    C = homozygous_unique tue
-    D = homozygous_unique ab
-    in a 50kB window
+    A / (B*C)
+    A = homozygous unique to target_sample
+    B = homozygous unique to control_sample
+    C = heterozygous in target_sample
+    in a 1MB window
 
   format out:
 
@@ -25,10 +24,13 @@ EOF
 # Functions:
 
 def mapping_score(number_homo, number_hetero,number_mutation_strand,
-  number_wt_strand)
+  number_wt_strand, homo_control)
   number_hetero = 1 if number_hetero == 0
   number_wt_strand = 1 if number_wt_strand == 0
-  (number_homo.to_f/number_hetero.to_f)* (number_mutation_strand.to_f / number_wt_strand.to_f)
+  homo_control = 1 if homo_control <= 0
+  #(number_homo.to_f/number_hetero.to_f)* (number_mutation_strand.to_f / number_wt_strand.to_f)
+  #number_mutation_strand.to_f / (number_hetero.to_f* number_wt_strand.to_f)
+  (number_homo / (homo_control * number_hetero)).to_f #* number_mutation_strand/number_wt_strand
 end
 
 def snp_exist?(info)
@@ -43,7 +45,7 @@ def snp_unique?(parent_info, total_number)
   homozygous = Array.new(5,0)
   parent_info.each do |key,info|
     info = info.split(":")
-    homozygous[key] = 1 if snp_homo?(info[0]) && info[3].to_f > 5.0
+    homozygous[key] = 1 if snp_homo?(info[0]) && info[3].to_f > 20.0
   end
   if homozygous.index(1) == homozygous.rindex(1) && homozygous.index(1) != nil
     total_number[homozygous.index(1)] += 1
@@ -52,7 +54,7 @@ def snp_unique?(parent_info, total_number)
 end
 
 # _ Main _:
-if ARGV.length != 5
+if ARGV.length != 6
   puts usage
   exit
 end
@@ -62,13 +64,14 @@ parent_vcf = ARGV[1]
 target_pos = ARGV[2].to_i + 8
 mut_strand_pos = ARGV[3].to_i + 8
 wt_strand_pos = ARGV[4].to_i + 8
+control_pos = ARGV[5].to_i + 8
 #reference_pos = ARGV[5].to_i + 8
 i = 0
 mut = 0
 wik = 0
 sample = 0
 doubled = 0
-window_size = 100000
+window_size = 1000000
 window_first = window_size
 window_second = window_size/2
 
@@ -88,6 +91,12 @@ number_mut_strand_first_window = 0
 number_mut_strand_second_window = 0
 number_wt_strand_first_window = 0
 number_wt_strand_second_window = 0
+number_homo_control_strand_first_window = 0
+number_homo_control_strand_second_window = 0
+
+
+number_homo_all = 0
+number_control_all = 0
 
 dummy = false
 state = "nothing"
@@ -96,6 +105,23 @@ File.open(combined_vcf).each do |line|
   line.chomp!
   line = line.split("\t")
   target_info = line[target_pos]
+
+
+  #STDERR.puts line.join("\t")
+  #STDERR.puts control_pos
+  #STDERR.puts line[control_pos]
+  #control_info = "dummy"
+  control_info = line[control_pos].split(":") #if !(line[control_pos] =~ /\.\/\./)
+
+  ## Is Target Info homozygous
+  control_homo = false
+  if snp_homo?(control_info[0]) && !snp_homo?(target_info) &&
+    control_info[2].to_i > 10 && control_info[3].to_i > 40
+    control_homo = true
+    number_homo_control_strand_first_window += 1
+    number_homo_control_strand_second_window += 1
+  end
+
   next if target_info =~ /\.\/\./
   next if target_info =~ /0\/0/
   target_info = target_info.split(":")
@@ -161,12 +187,14 @@ File.open(combined_vcf).each do |line|
 
     score = mapping_score(number_homo_second_window.to_f,
       number_hetero_second_window.to_f, number_mut_strand_second_window.to_f,
-      number_wt_strand_second_window.to_f)
+      number_wt_strand_second_window.to_f,
+      number_homo_control_strand_second_window.to_f)
 
     number_homo_second_window = 0
     number_hetero_second_window = 0
     number_mut_strand_second_window = 0
     number_wt_strand_second_window = 0
+    number_homo_control_strand_second_window = 0
 
     if dummy
       puts "#{window_second}\t#{score}"
@@ -179,39 +207,57 @@ File.open(combined_vcf).each do |line|
 
    when "first_done"
     i = 0
+    number_homo_all += number_homo_first_window
+    number_control_all += number_homo_control_strand_first_window
      score = mapping_score(number_homo_first_window.to_f,
       number_hetero_first_window.to_f, number_mut_strand_first_window.to_f,
-      number_wt_strand_first_window.to_f)
+      number_wt_strand_first_window.to_f,
+      number_homo_control_strand_first_window.to_f)
 
     number_homo_first_window = 0
     number_hetero_first_window = 0
     number_mut_strand_first_window = 0
     number_wt_strand_first_window = 0
+    number_homo_control_strand_first_window = 0
     puts "#{window_first}\t#{score}"
     window_first += window_size
     #exit
    end
   state = "nothing"
 
-
+  snp_homo = false
   if snp_homo?(target_info[0]) #&& !homozygous.include?(1)
     #total_number[0] += 1
+    snp_homo = true
     number_homo_first_window += 1
     number_homo_second_window += 1
   end
   if snp_homo?(target_info[0]) && homozygous[wt_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
+  #if homozygous[wt_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
   #if (wt_strand_info =~ /1\/1/ || wt_strand_info =~ /2\/2/) && wt_strand_info.split(":")[3].to_i > 25
     number_wt_strand_first_window += 1
     number_wt_strand_second_window += 1
     wik += 1
   elsif snp_homo?(target_info[0]) && homozygous[mut_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
+  #elsif homozygous[mut_strand_pos-8] == 1 && homozygous.index(1) == homozygous.rindex(1)
     #if (mut_stand_info =~ /1\/1/ || mut_stand_info =~ /2\/2/) && mut_stand_info.split(":")[3].to_i > 25
       number_mut_strand_first_window += 1
       number_mut_strand_second_window += 1
       mut += 1
-  elsif !snp_homo?(target_info[0]) #homozygous.include?(1)
+  elsif !snp_homo?(target_info[0]) && !homozygous.include?(1)
     number_hetero_first_window += 1
     number_hetero_second_window += 1
+  end
+
+  if snp_homo?(target_info[0]) && snp_homo?(control_info[0])
+    if snp_homo
+      number_homo_first_window -= 1
+      number_homo_second_window -= 1
+    end
+    if control_homo
+      number_homo_control_strand_first_window -= 1
+      number_homo_control_strand_second_window -= 1
+    end
   end
 
 
@@ -220,6 +266,7 @@ File.open(combined_vcf).each do |line|
 
 end
 
-STDERR.puts "Wik: #{wik}    TLF: #{mut}   Sample: #{sample}"
-STDERR.puts total_number.join(":")
+#STDERR.puts "Wik: #{wik}    TLF: #{mut}   Sample: #{sample}"
+#STDERR.puts total_number.join(":")
+STDERR.puts "Sample: #{number_homo_all}, Control #{number_control_all}"
 STDERR.puts doubled

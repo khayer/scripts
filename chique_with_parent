@@ -1,0 +1,194 @@
+#!/usr/bin/env ruby
+
+usage =<<EOF
+
+  #{$0} combined.vcf target_pos control,pos,ition,s
+ -----------------------------------------
+  Mapping Score is definied as:
+    (A/B) / (C/D)
+    A = homozygous unique target_sample in window
+    B = # total unique homozygous in sample
+    C = homozygous unique control_sample in window
+    D = # total unique homozygous in control
+    in a 1MB window
+
+  format out:
+
+  position score
+  ...
+  500000 50
+  500001 50
+  500002 51
+  ...
+EOF
+
+# Functions:
+
+def chique_score(sample_homo, sample_homo_total, control_homo,
+  control_homo_total)
+  control_homo = 1 if control_homo == 0
+  (sample_homo.to_f/sample_homo_total.to_f)/
+    (sample_homo.to_f/sample_homo_total.to_f+control_homo.to_f/control_homo_total.to_f)
+end
+
+def snp_exist?(info)
+  !(info =~ /\.\/\./) && !(info =~ /0\/0/)
+end
+
+def snp_homo?(info)
+  (info =~ /1\/1/) || (info =~ /2\/2/) || (info =~ /3\/3/)
+end
+
+def snp_unique?(parent_info, total_number)
+  homozygous = Array.new(5,0)
+  parent_info.each do |key,info|
+    info = info.split(":")
+    homozygous[key] = 1 if snp_homo?(info[0]) && info[3].to_f > 20.0
+  end
+  if homozygous.index(1) == homozygous.rindex(1) && homozygous.index(1) != nil
+    total_number[homozygous.index(1)] += 1
+  end
+  return total_number, homozygous
+end
+
+# _ Main _:
+if ARGV.length != 3
+  puts usage
+  exit
+end
+
+combined_vcf = ARGV[0]
+target_pos = ARGV[1].to_i + 8
+control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
+
+i = 0
+mut = 0
+wik = 0
+sample = 0
+doubled = 0
+window_size = 1000000
+window_first = window_size
+window_second = window_size/2
+
+snp_homo_unique_total = Array.new(control_positions.length*2,0)
+
+sample_homo_first_window = Array.new(control_positions.length,0)
+sample_homo_second_window = Array.new(control_positions.length,0)
+control_homo_first_window = Array.new(control_positions.length,0)
+control_homo_second_window = Array.new(control_positions.length,0)
+
+first_window_values = []
+second_window_values = []
+
+dummy = false
+
+File.open(combined_vcf).each do |line|
+  next if line =~ /^#/
+  line.chomp!
+  line = line.split("\t")
+  target_info = line[target_pos]
+
+  control_homo = Array.new(control_positions.length+1,false)
+  control_positions.each_with_index do |control_pos,i|
+    control_info = line[control_pos].split(":")
+
+    if snp_homo?(control_info[0]) && !snp_homo?(target_info) &&
+      control_info[2].to_i > 10 && control_info[3].to_i > 40
+      control_homo[i] = true
+    end
+  end
+
+
+
+  next if target_info =~ /\.\/\./
+  next if target_info =~ /0\/0/
+  target_info = target_info.split(":")
+  next if target_info[2].to_i < 10
+  next if target_info[3].to_i < 40
+  target_info.join("\t")
+  sample += 1
+  position = line[1].to_i
+
+  state = "nothing"
+  if position > window_second
+    state = "second_done"
+  end
+  if position > window_first
+    state = "first_done"
+  end
+
+  case state
+   when "second_done"
+
+    if dummy
+      second_window_values << [window_second,sample_homo_second_window,control_homo_second_window]
+      window_second += window_size
+    else
+      window_second += window_size
+      dummy = true
+    end
+
+    sample_homo_second_window = Array.new(control_positions.length,0)
+    control_homo_second_window = Array.new(control_positions.length,0)
+
+   when "first_done"
+
+    first_window_values << [window_first,sample_homo_first_window,control_homo_first_window]
+
+    sample_homo_first_window = Array.new(control_positions.length,0)
+    control_homo_first_window = Array.new(control_positions.length,0)
+
+    #puts "#{window_first}\t#{score}"
+    window_first += window_size
+
+   end
+
+  snp_homo = false
+  if snp_homo?(target_info[0])
+    snp_homo = true
+  end
+
+  control_positions.each_with_index do |control_pos,i|
+
+    if snp_homo && !control_homo[i]
+      sample_homo_first_window[i] += 1
+      sample_homo_second_window[i] += 1
+      snp_homo_unique_total[i+control_positions.length] += 1
+    elsif !snp_homo && control_homo[i]
+      control_homo_first_window[i] += 1
+      control_homo_second_window[i] += 1
+      snp_homo_unique_total[i] += 1
+    end
+  end
+
+end
+
+second_window_values = second_window_values.reverse()
+STDERR.puts snp_homo_unique_total.join(":")
+first_window_values.each do |first_values|
+  position = first_values[0]
+
+  output = "#{position}\t"
+  (0..control_positions.length-1).each do |i|
+    sample_homo = first_values[1][i]
+    sample_homo_total = snp_homo_unique_total[i+control_positions.length]
+    control_homo = first_values[2][i]
+    control_homo_total = snp_homo_unique_total[i]
+    output += "#{chique_score(sample_homo, sample_homo_total, control_homo,
+      control_homo_total)}\t"
+  end
+  puts output
+  second_values = second_window_values.pop
+  position = second_values[0]
+  output = "#{position}\t"
+  (0..control_positions.length-1).each do |i|
+    sample_homo = second_values[1][i]
+    sample_homo_total = snp_homo_unique_total[i+control_positions.length]
+    control_homo = second_values[2][i]
+    control_homo_total = snp_homo_unique_total[i]
+    output += "#{chique_score(sample_homo, sample_homo_total, control_homo,
+      control_homo_total)}\t"
+  end
+  puts output
+
+end
