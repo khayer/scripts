@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+      #{$0} sorted.vcf score.txt > output.vcf
+EOF
+
+if ARGV.length != 2
+  puts usage
+  exit
+end
+
+vcf = File.open(ARGV[0],'r')
+score_file = File.open(ARGV[1],'r')
+#line_score = phast_cons.readline.split(" ")
+line_vcf = ""
+vcf.each do |line|
+  line_vcf = line.chomp()
+  if line_vcf =~ /^#/
+    puts line_vcf
+    next
+  else
+    break
+  end
+end
+
+line_vcf = line_vcf.split("\t")
+
+score_file.each do |score|
+  score = score.split("\t")
+  score_pos = score[0].to_i
+  ups_score = score[1]
+  while line_vcf[1].to_i < score_pos
+    puts "#{line_vcf.join("\t")}\t#{ups_score}"
+    line_vcf = vcf.readline.chomp().split("\t")
+  end
+
+end

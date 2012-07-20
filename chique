@@ -29,6 +29,8 @@ def chique_score(sample_homo, sample_homo_total, control_homo,
   control_homo = 1 if control_homo == 0
   (sample_homo.to_f/sample_homo_total.to_f)/
     (sample_homo.to_f/sample_homo_total.to_f+control_homo.to_f/control_homo_total.to_f)
+  #(sample_homo.to_f/sample_homo_total.to_f)/
+  #  (control_homo.to_f/control_homo_total.to_f)
 end
 
 def snp_exist?(info)
@@ -80,7 +82,7 @@ control_homo_second_window = Array.new(control_positions.length,0)
 first_window_values = []
 second_window_values = []
 
-dummy = false
+dummy = true
 
 File.open(combined_vcf).each do |line|
   next if line =~ /^#/
@@ -93,7 +95,7 @@ File.open(combined_vcf).each do |line|
     control_info = line[control_pos].split(":")
 
     if snp_homo?(control_info[0]) && !snp_homo?(target_info) &&
-      control_info[2].to_i > 10 && control_info[3].to_i > 40
+      control_info[2].to_i > 6 && control_info[3].to_i > 60
       control_homo[i] = true
     end
   end
@@ -103,7 +105,7 @@ File.open(combined_vcf).each do |line|
   next if target_info =~ /\.\/\./
   next if target_info =~ /0\/0/
   target_info = target_info.split(":")
-  next if target_info[2].to_i < 10
+  next if target_info[2].to_i < 6
   next if target_info[3].to_i < 40
   target_info.join("\t")
   sample += 1
@@ -163,28 +165,28 @@ File.open(combined_vcf).each do |line|
 
 end
 
-second_window_values = second_window_values.reverse()
+first_window_values = first_window_values.reverse()
 STDERR.puts snp_homo_unique_total.join(":")
-first_window_values.each do |first_values|
-  position = first_values[0]
-
-  output = "#{position}\t"
-  (0..control_positions.length-1).each do |i|
-    sample_homo = first_values[1][i]
-    sample_homo_total = snp_homo_unique_total[i+control_positions.length]
-    control_homo = first_values[2][i]
-    control_homo_total = snp_homo_unique_total[i]
-    output += "#{chique_score(sample_homo, sample_homo_total, control_homo,
-      control_homo_total)}\t"
-  end
-  puts output
-  second_values = second_window_values.pop
+second_window_values.each do |second_values|
   position = second_values[0]
+
   output = "#{position}\t"
   (0..control_positions.length-1).each do |i|
     sample_homo = second_values[1][i]
     sample_homo_total = snp_homo_unique_total[i+control_positions.length]
     control_homo = second_values[2][i]
+    control_homo_total = snp_homo_unique_total[i]
+    output += "#{chique_score(sample_homo, sample_homo_total, control_homo,
+      control_homo_total)}\t"
+  end
+  puts output
+  first_values = first_window_values.pop
+  position = first_values[0]
+  output = "#{position}\t"
+  (0..control_positions.length-1).each do |i|
+    sample_homo = first_values[1][i]
+    sample_homo_total = snp_homo_unique_total[i+control_positions.length]
+    control_homo = first_values[2][i]
     control_homo_total = snp_homo_unique_total[i]
     output += "#{chique_score(sample_homo, sample_homo_total, control_homo,
       control_homo_total)}\t"
