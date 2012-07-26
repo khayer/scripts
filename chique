@@ -95,8 +95,11 @@ File.open(combined_vcf).each do |line|
     control_info = line[control_pos].split(":")
 
     if snp_homo?(control_info[0]) && !snp_homo?(target_info) &&
-      control_info[2].to_i > 6 && control_info[3].to_i > 60
+      control_info[2].to_i > 6 && control_info[3].to_i > 10
       control_homo[i] = true
+      control_homo_first_window[i] += 1
+      control_homo_second_window[i] += 1
+      snp_homo_unique_total[i] += 1
     end
   end
 
@@ -104,9 +107,10 @@ File.open(combined_vcf).each do |line|
 
   next if target_info =~ /\.\/\./
   next if target_info =~ /0\/0/
+  next if target_info =~ /0\/1/ || target_info =~ /0\/2/ || target_info =~ /0\/3/
   target_info = target_info.split(":")
   next if target_info[2].to_i < 6
-  next if target_info[3].to_i < 40
+  next if target_info[3].to_i < 10
   target_info.join("\t")
   sample += 1
   position = line[1].to_i
@@ -134,7 +138,9 @@ File.open(combined_vcf).each do |line|
     control_homo_second_window = Array.new(control_positions.length,0)
 
    when "first_done"
-
+    #STDERR.puts window_first
+    ##STDERR.puts sample_homo_first_window
+    #STDERR.puts control_homo_first_window
     first_window_values << [window_first,sample_homo_first_window,control_homo_first_window]
 
     sample_homo_first_window = Array.new(control_positions.length,0)
@@ -143,27 +149,35 @@ File.open(combined_vcf).each do |line|
     #puts "#{window_first}\t#{score}"
     window_first += window_size
 
+    #STDIN.gets
    end
 
   snp_homo = false
   if snp_homo?(target_info[0])
     snp_homo = true
   end
-
+  #STDERR.puts control_homo.join(":")
+  #STDERR.puts snp_homo
   control_positions.each_with_index do |control_pos,i|
-
-    if snp_homo && !control_homo[i]
+    control_info = line[control_pos]
+    if snp_homo && !snp_homo?(control_info)
+      #STDERR.puts sample_homo_first_window.join(":")
       sample_homo_first_window[i] += 1
       sample_homo_second_window[i] += 1
       snp_homo_unique_total[i+control_positions.length] += 1
-    elsif !snp_homo && control_homo[i]
-      control_homo_first_window[i] += 1
-      control_homo_second_window[i] += 1
-      snp_homo_unique_total[i] += 1
+    #elsif !snp_homo && control_homo[i]
+    #  control_homo_first_window[i] += 1
+    #  control_homo_second_window[i] += 1
+    #  snp_homo_unique_total[i] += 1
     end
   end
 
 end
+k = File.open("test_file","w")
+first_window_values.each do |values|
+  k.write("#{values.join("\t")}\n")
+end
+k.close
 
 first_window_values = first_window_values.reverse()
 STDERR.puts snp_homo_unique_total.join(":")

@@ -24,7 +24,7 @@ end
 def snp_unique?(sample_genotype,sample_genotype_quality)
   k = true
   sample_genotype.each_with_index do |genotype,i|
-    k = false if ((genotype =~ /1\/1/ || genotype =~ /0\/1/ || genotype =~ /2\/2/|| genotype =~ /1\/2/ || genotype =~ /0\/2/) && sample_genotype_quality[i] >= 40)
+    k = false if ((genotype =~ /1\/1/ || genotype =~ /0\/1/ || genotype =~ /2\/2/|| genotype =~ /1\/2/ || genotype =~ /0\/2/) && sample_genotype_quality[i] >= 10)
   end
   k
 end
@@ -99,9 +99,9 @@ File.open(csv_doc).each do |line|
   if target_info[0] =~ /0\/1/ || target_info[0] =~ /0\/2/
     allele_depth = target_info[1].split(",")
     next if (2*allele_depth[0].to_i) >= allele_depth[1].to_i
-    next unless (target_info[2].to_i >= 7 && target_info[3].to_f < 40.0 && (target_info[0] =~ /0\/1/ || target_info[0] =~ /0\/2/  ))
+    next unless (target_info[2].to_i >= 3 && target_info[3].to_f < 25.0 && (target_info[0] =~ /0\/1/ || target_info[0] =~ /0\/2/  ))
   else
-    next unless (target_info[3].to_f > 40.0 && (target_info[0] =~ /1\/1/ || target_info[0] =~ /2\/2/  ))
+    next unless (target_info[3].to_f > 1 && (target_info[0] =~ /1\/1/ || target_info[0] =~ /2\/2/  ))
   end
   #AC=2;AF=1.00;AN=2;BaseQRankSum=1.162;DP=31;Dels=0.00;FS=2.741;HRun=0;HaplotypeScore=0.0000;MQ=51.54;MQ0=0;MQRankSum=-0.473;QD=18.91;ReadPosRankSum=-2.109;SB=-245.55;SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
   #SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
@@ -110,7 +110,7 @@ File.open(csv_doc).each do |line|
   info = line[7]
 
   score = line[-1].to_f
-  #next if score < 0.50
+  next if score < 0.70
   phast_cons = line[-2]
   phast_start = line[-4]
   phast_end = line[-3]
@@ -175,7 +175,7 @@ File.open(csv_doc).each do |line|
 
     i += 1
 
-  elsif (target_info[0] =~ /1\/1/ && impact=="MODERATE"  && snp_unique?(sample_genotype,sample_genotype_quality))
+  elsif (target_info[0] =~ /1\/1/ && impact=="MODERATE" && snp_unique?(sample_genotype,sample_genotype_quality))
   #elsif (sample_genotype[0] == "1/1" &&  !sample_genotype.values_at(1..-1).include?("1/1"))
     #score = get_score(location,position,seg)
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :orange, :color => :white
