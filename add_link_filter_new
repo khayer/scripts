@@ -24,7 +24,7 @@ end
 def snp_unique?(sample_genotype,sample_genotype_quality)
   k = true
   sample_genotype.each_with_index do |genotype,i|
-    k = false if ((genotype =~ /1\/1/ || genotype =~ /0\/1/ || genotype =~ /2\/2/|| genotype =~ /1\/2/ || genotype =~ /0\/2/) && sample_genotype_quality[i] >= 10)
+    k = false if ((genotype =~ /1\/1/ || genotype =~ /0\/1/ || genotype =~ /2\/2/|| genotype =~ /1\/2/ || genotype =~ /0\/2/) && sample_genotype_quality[i] >= 20)
   end
   k
 end
@@ -110,7 +110,7 @@ File.open(csv_doc).each do |line|
   info = line[7]
 
   score = line[-1].to_f
-  next if score < 0.70
+  #next if score < 0.70
   phast_cons = line[-2]
   phast_start = line[-4]
   phast_end = line[-3]
@@ -188,7 +188,7 @@ File.open(csv_doc).each do |line|
     end
 
     i += 1
-  elsif !sample_genotype.include?(target_info[0])  && snp_unique?(sample_genotype,sample_genotype_quality) && (impact=="HIGH" || impact=="MODERATE")
+  elsif snp_unique?(sample_genotype,sample_genotype_quality) && (impact=="HIGH" || impact=="MODERATE" )
     #score = get_score(location,position,seg)
 
     sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
