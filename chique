@@ -173,11 +173,11 @@ File.open(combined_vcf).each do |line|
   end
 
 end
-k = File.open("test_file","w")
-first_window_values.each do |values|
-  k.write("#{values.join("\t")}\n")
-end
-k.close
+#k = File.open("test_file","w")
+#first_window_values.each do |values|
+#  k.write("#{values.join("\t")}\n")
+#end
+#k.close
 
 first_window_values = first_window_values.reverse()
 STDERR.puts snp_homo_unique_total.join(":")
