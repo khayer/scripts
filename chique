@@ -95,7 +95,7 @@ File.open(combined_vcf).each do |line|
     control_info = line[control_pos].split(":")
 
     if snp_homo?(control_info[0]) && !snp_homo?(target_info) &&
-      control_info[2].to_i > 6 && control_info[3].to_i > 10
+      control_info[2].to_i > 6 && control_info[3].to_i > 20
       control_homo[i] = true
       control_homo_first_window[i] += 1
       control_homo_second_window[i] += 1
@@ -110,7 +110,7 @@ File.open(combined_vcf).each do |line|
   next if target_info =~ /0\/1/ || target_info =~ /0\/2/ || target_info =~ /0\/3/
   target_info = target_info.split(":")
   next if target_info[2].to_i < 6
-  next if target_info[3].to_i < 10
+  next if target_info[3].to_i < 20
   target_info.join("\t")
   sample += 1
   position = line[1].to_i
