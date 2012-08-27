@@ -27,10 +27,10 @@ EOF
 def chique_score(sample_homo, sample_homo_total, control_homo,
   control_homo_total)
   control_homo = 1 if control_homo == 0
-  #(sample_homo.to_f/sample_homo_total.to_f)/
-  #  (sample_homo.to_f/sample_homo_total.to_f+control_homo.to_f/control_homo_total.to_f)
   (sample_homo.to_f/sample_homo_total.to_f)/
-    (control_homo.to_f/control_homo_total.to_f)
+    (sample_homo.to_f/sample_homo_total.to_f+control_homo.to_f/control_homo_total.to_f)
+  #(sample_homo.to_f/sample_homo_total.to_f)/
+  #  (control_homo.to_f/control_homo_total.to_f)
 end
 
 def snp_exist?(info)
