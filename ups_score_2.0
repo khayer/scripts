@@ -70,11 +70,6 @@ combined_vcf = ARGV[0]
 target_pos = ARGV[1].to_i + 8
 control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
 
-i = 0
-mut = 0
-wik = 0
-sample = 0
-doubled = 0
 window_size = 1000000
 window_first = window_size
 window_second = window_size/2
@@ -96,30 +91,39 @@ File.open(combined_vcf).each do |line|
   line.chomp!
   line = line.split("\t")
   target_info = line[target_pos]
+  target_info = target_info.split(":")
 
   control_homo = Array.new(control_positions.length+1,false)
   control_positions.each_with_index do |control_pos,i|
     control_info = line[control_pos].split(":")
 
-    if snp_homo?(control_info[0]) && !snp_homo?(target_info) &&
-      control_info[2].to_i > 6 && control_info[3].to_i > 20
+    if snp_homo?(control_info[0]) && !snp_homo?(target_info[0]) &&
+      control_info[2].to_i > 6 && control_info[3].to_i > 20 &&
+      target_info[2].to_i > 6 && target_info[3].to_i > 20
       control_homo[i] = true
-      control_homo_first_window[i] += 1
-      control_homo_second_window[i] += 1
-      snp_homo_unique_total[i] += 1
     end
   end
 
+  if control_homo.index(true) == control_homo.rindex(true) &&
+      control_homo.index(true) != nil
+    #total_number[homozygous.index(1)] += 1
+    control_homo_first_window[control_homo.index(true)] += 1
+    control_homo_second_window[control_homo.index(true)] += 1
+    snp_homo_unique_total[control_homo.index(true)] += 1
+  end
+
+  #STDERR.puts control_homo.join(":")
+
+  #b = control_homo.inject(Hash.new(0)) {|h,i| h[i] += 1; h }
+  #b.to_a.each {|error,count| puts "#{count}: #{error}" if error == true }
+  #STDERR.puts control_homo_first_window.join(":")
 
 
-  next if target_info =~ /\.\/\./
-  next if target_info =~ /0\/0/
-  next if target_info =~ /0\/1/ || target_info =~ /0\/2/ || target_info =~ /0\/3/
-  target_info = target_info.split(":")
+
+  next unless snp_homo?(target_info[0])
   next if target_info[2].to_i < 6
   next if target_info[3].to_i < 20
   target_info.join("\t")
-  sample += 1
   position = line[1].to_i
 
   state = "nothing"
@@ -145,6 +149,7 @@ File.open(combined_vcf).each do |line|
     control_homo_second_window = Array.new(control_positions.length,0)
 
    when "first_done"
+    STDERR.puts window_first
     #STDERR.puts window_first
     ##STDERR.puts sample_homo_first_window
     #STDERR.puts control_homo_first_window
@@ -159,15 +164,15 @@ File.open(combined_vcf).each do |line|
     #STDIN.gets
    end
 
-  snp_homo = false
-  if snp_homo?(target_info[0])
-    snp_homo = true
-  end
   #STDERR.puts control_homo.join(":")
   #STDERR.puts snp_homo
   control_positions.each_with_index do |control_pos,i|
-    control_info = line[control_pos]
-    if snp_homo && !snp_homo?(control_info)
+    control_info = line[control_pos].split(":")
+    #STDERR.puts control_homo.join(":") if control_homo[i]
+    if !snp_homo?(control_info[0]) && snp_homo?(target_info[0]) &&
+      control_info[2].to_i > 6 && control_info[3].to_i > 20
+      #STDERR.puts control_homo.join("::")
+      #STDERR.puts target_info.join("::")
       #STDERR.puts sample_homo_first_window.join(":")
       sample_homo_first_window[i] += 1
       sample_homo_second_window[i] += 1
@@ -178,6 +183,8 @@ File.open(combined_vcf).each do |line|
     #  snp_homo_unique_total[i] += 1
     end
   end
+  #STDERR.puts "Here sample:"
+  #STDERR.puts sample_homo_first_window.join(":")
 
 end
 #k = File.open("test_file","w")
