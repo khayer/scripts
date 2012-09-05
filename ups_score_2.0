@@ -166,11 +166,22 @@ File.open(combined_vcf).each do |line|
 
   #STDERR.puts control_homo.join(":")
   #STDERR.puts snp_homo
+  any_control_homo = false
   control_positions.each_with_index do |control_pos,i|
     control_info = line[control_pos].split(":")
     #STDERR.puts control_homo.join(":") if control_homo[i]
-    if !snp_homo?(control_info[0]) && snp_homo?(target_info[0]) &&
-      control_info[2].to_i > 6 && control_info[3].to_i > 20
+    if snp_homo?(control_info[0]) && control_info[2].to_i > 6 &&
+     control_info[3].to_i > 20
+      any_control_homo = true
+      break
+    end
+  end
+
+
+  control_positions.each_with_index do |control_pos,i|
+    control_info = line[control_pos].split(":")
+    #STDERR.puts control_homo.join(":") if control_homo[i]
+    if !any_control_homo #&& snp_homo?(target_info[0])
       #STDERR.puts control_homo.join("::")
       #STDERR.puts target_info.join("::")
       #STDERR.puts sample_homo_first_window.join(":")
