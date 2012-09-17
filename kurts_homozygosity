@@ -3,7 +3,7 @@ usage =<<EOF
       #{$0} sorted.vcf sample_number
 EOF
 
-if ARGV.length != 1
+if ARGV.length != 2
   puts usage
   exit
 end
