@@ -41,6 +41,7 @@ vcf.each do |line|
       if counter > value
         ten_highest[i] = counter
         coordinates[i] = [start_pos,end_pos]
+        break
       end
     end
     counter = 0
