@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+usage =<<EOF
+      #{$0} sorted.vcf sample_number
+EOF
+
+if ARGV.length != 1
+  puts usage
+  exit
+end
+
+def homozygous?(sample)
+  sample =~ /0\/0/ || sample =~ /1\/1/
+end
+
+
+vcf = File.open(ARGV[0],'r')
+sample_number = ARGV[1].to_i + 8
+counter = 0
+
+vcf.each do |line|
+  line = line.chomp()
+  if line =~ /^#/
+    next
+  end
+
+  line = line.split(" ")
+  info = line[7]
+  map_quality = info.split("MQ=")[1].split(";")[0].to_f
+  next if map_quality < 25
+  sample = line[9]
+  start_pos = line[1].to_i if counter == 0
+  end_pos = line[1].to_i-1
+  if homozygous?(sample)
+    counter += 1
+  else
+    puts "#{start_pos}\t#{end_pos}\t#{counter}"
+    counter = 0
+  end
+
+
+end
