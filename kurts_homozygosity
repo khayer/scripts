@@ -48,6 +48,7 @@ vcf.each do |line|
     start_pos = line[1].to_i
   end
 end
-
-puts ten_highest.join(':')
-puts coordinates.join(':')
+puts "Start\tEnd\tValue"
+ten_highest.each_with_index do |value,i|
+  puts "#{coordinates[i][0]}\t#{coordinates[i][1]}\t#{value}"
+end
