@@ -42,6 +42,10 @@ vcf.each do |line|
     #puts "#{start_pos}\t#{end_pos}\t#{counter}"
     ten_highest.each_with_index do |value, i|
       if counter > value
+        #save values
+        (i+1..(ten_highest.length-1)).to_a.reverse.each do |k|
+          ten_highest[k] = ten_highest[k-1]
+        end
         ten_highest[i] = counter
         coordinates[i] = [start_pos,end_pos]
         break
