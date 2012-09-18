@@ -9,7 +9,7 @@ if ARGV.length != 2
 end
 
 def homozygous?(sample)
-  sample =~ /0\/0/ || sample =~ /1\/1/
+  sample =~ /0\/0/ || sample =~ /1\/1/ || sample =~ /2\/2/ || sample =~ /3\/3/
 end
 
 ten_highest = Array.new(10,0)
@@ -27,6 +27,7 @@ vcf.each do |line|
   end
 
   line = line.split(" ")
+  next if line[7] == "LowQual"
   info = line[7]
   next if info == "."
   map_quality = info.split("MQ=")[1].split(";")[0].to_f
