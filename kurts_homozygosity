@@ -28,10 +28,11 @@ vcf.each do |line|
 
   line = line.split(" ")
   info = line[7]
-  next if info =~ /\.\/\./
+  next if info =~ /\./
   map_quality = info.split("MQ=")[1].split(";")[0].to_f
   next if map_quality < 25
   sample = line[9]
+  next if sample =~ /\.\/\./
   #start_pos = line[1].to_i if counter == 0
   end_pos = line[1].to_i-1
   if homozygous?(sample)
