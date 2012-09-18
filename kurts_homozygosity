@@ -53,6 +53,6 @@ vcf.each do |line|
 end
 puts "Start\tEnd\tValue"
 ten_highest.each_with_index do |value,i|
-  ratio = (coordinates[i][1] - coordinates[i][0]).to_f/value.to_f
+  ratio = value.to_f/(coordinates[i][1] - coordinates[i][0]).to_f
   puts "#{coordinates[i][0]}\t#{coordinates[i][1]}\t#{value}\t#{ratio}"
 end
