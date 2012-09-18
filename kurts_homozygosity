@@ -27,7 +27,7 @@ vcf.each do |line|
   end
 
   line = line.split(" ")
-  next if line[7] == "LowQual"
+  next if line[6] == "LowQual"
   info = line[7]
   next if info == "."
   map_quality = info.split("MQ=")[1].split(";")[0].to_f
