@@ -37,6 +37,8 @@ vcf.each do |line|
   #start_pos = line[1].to_i if counter == 0
   end_pos = line[1].to_i-1
   if homozygous?(sample)
+    puts sample
+    STDIN.gets()
     counter += 1
   else
     #puts "#{start_pos}\t#{end_pos}\t#{counter}"
