@@ -30,10 +30,10 @@ vcf.each do |line|
   next if line[6] == "LowQual"
   info = line[7]
   next if info == "."
-  map_quality = info.split("MQ=")[1].split(";")[0].to_f
-  next if map_quality < 30
-  read_depth = info.split("DP=")[1].split(";")[0].to_f
-  next if read_depth < 10
+  #map_quality = info.split("MQ=")[1].split(";")[0].to_f
+  #next if map_quality < 30
+  #read_depth = info.split("DP=")[1].split(";")[0].to_f
+  #next if read_depth < 10
   sample = line[9]
   next if sample =~ /\.\/\./
   #start_pos = line[1].to_i if counter == 0
