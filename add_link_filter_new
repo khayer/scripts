@@ -98,8 +98,10 @@ File.open(csv_doc).each do |line|
 
   if target_info[0] =~ /0\/1/ || target_info[0] =~ /0\/2/
     allele_depth = target_info[1].split(",")
-    next if (2*allele_depth[0].to_i) >= allele_depth[1].to_i
-    next unless (target_info[2].to_i >= 3 && target_info[3].to_f < 25.0 && (target_info[0] =~ /0\/1/ || target_info[0] =~ /0\/2/  ))
+    next if (allele_depth[0].to_i) >= allele_depth[1].to_i
+    ### next if (2*allele_depth[0].to_i) >= allele_depth[1].to_i
+    next unless target_info[2].to_i >= 2
+    ### next unless (target_info[2].to_i >= 3 && target_info[3].to_f < 25.0 && (target_info[0] =~ /0\/1/ || target_info[0] =~ /0\/2/  ))
   else
     next unless (target_info[3].to_f > 1 && (target_info[0] =~ /1\/1/ || target_info[0] =~ /2\/2/  ))
   end

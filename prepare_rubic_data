@@ -49,3 +49,5 @@ CSV.foreach(ARGV[0],  {:headers => :first_row}) do |row|
 
   cubase = "http://chart.apis.google.com/chart?chs=%sx%s&cht=lc&chxt=x,y&chxl=0:|18||||||24||||||30||||||36||||||42||||||48||||||54||||||60|||1:|#{min}|#{mid}|#{max}|&chxp=1,2,50,97&chxr=0,18,66&chls=0,0,0|2,1,0&chf=c,ls,0,CCCCCC,0.125,FFFFFF,0.25,CCCCCC,0.25,FFFFFF,0.25,CCCCCC,0.125&chd=t:#{scaled.join(",")}|#{averaged.join(",")}&chco=3164A6,FDB33A&chm=o,555555,0,-1,5"
   out.puts row["Probe Set"] +"@"+time_points.join(",")+"@"+numbers.join(",")+"@"+cubase
+
+end
