@@ -28,7 +28,7 @@ def snp_homo?(info)
 end
 
 # _ Main _:
-if ARGV.length != 3
+if ARGV.length != 4
   puts usage
   exit
 end
@@ -36,14 +36,22 @@ end
 combined_vcf = ARGV[0]
 target_pos = ARGV[1].to_i + 8
 control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
+total_number_of_bases_in_chromosome = ARGV[3].to_i
 
 window_size = 660000
 window_first = window_size
 window_second = window_size/2
 
+
+all_snps_first_window = 0
+all_snps_second_window = 0
 homozygous_snps_first_window = 0
 homozygous_snps_second_window = 0
 dummy = false
+positions = Array.new
+homozygous = Array.new
+total_bases_examined = 0
+
 
 File.open(combined_vcf).each do |line|
   next if line =~ /^#/  # getting rid of header lines
@@ -53,7 +61,7 @@ File.open(combined_vcf).each do |line|
   next if target_info =~ /\.\/\./ # If target_info = "./." we move on
   #next unless snp_homo?(target_info)
   target_info = target_info.split(":")
-  next unless target_info[2].to_i > 5
+  next unless target_info[2].to_i > 9
   target_genotype = target_info[0]
 
   all_genotypes = Array.new()
@@ -62,7 +70,7 @@ File.open(combined_vcf).each do |line|
   all_pos = [control_positions , target_pos].flatten
   all_pos.each do |current_sample_number|
     unless line[current_sample_number] =~ /\.\/\./
-      next unless line[current_sample_number].split(":")[2].to_i > 5
+      next unless line[current_sample_number].split(":")[2].to_i > 9
       all_genotypes << line[current_sample_number].split(":")[0]
       line[current_sample_number].split(":")[1].split(",").each_with_index do |number, index|
         all_read_numbers[index] += number.to_i
@@ -72,19 +80,17 @@ File.open(combined_vcf).each do |line|
   end
 
   fraction = (all_read_numbers.max.to_f / coverage.to_f)
-  next unless fraction < 0.9
+  next unless fraction < 0.75
 
   if snp_homo?(target_info[0])
     homozygous_snps_first_window += 1
     homozygous_snps_second_window += 1
-  else
-    homozygous_snps_first_window -= 1
-    homozygous_snps_second_window -= 1
   end
 
+  all_snps_first_window += 1
+  all_snps_second_window += 1
 
   position = line[1].to_i
-
   state = "nothing"
   if position > window_second
     state = "second_done"
@@ -95,20 +101,34 @@ File.open(combined_vcf).each do |line|
 
   case state
    when "second_done"
-
     if dummy
-      puts "#{window_second}\t#{homozygous_snps_second_window}"
+      #ratio = ( homozygous_snps_second_window.to_f / ( all_snps_second_window.to_f / window_size.to_f ))
+      #puts "#{window_second}\t#{ratio}"
+      positions << window_second
+      homozygous << homozygous_snps_second_window
       homozygous_snps_second_window = 0
+      all_snps_second_window = 0
       window_second += window_size
     else
       window_second += window_size
       homozygous_snps_second_window = 0
+      all_snps_second_window = 0
       dummy = true
     end
-
    when "first_done"
-    puts "#{window_first}\t#{homozygous_snps_first_window}"
+    #ratio = ( homozygous_snps_first_window.to_f / ( all_snps_first_window.to_f / window_size.to_f ))
+    #puts "#{window_first}\t#{ratio}"
+    positions << window_first
+    homozygous << homozygous_snps_first_window
+    total_bases_examined += all_snps_first_window
     homozygous_snps_first_window = 0
+    all_snps_first_window = 0
     window_first += window_size
    end
 end
+
+positions.each_with_index do |pos,i|
+  ratio = homozygous[i].to_f * total_bases_examined.to_f/total_number_of_bases_in_chromosome.to_f
+  puts "#{pos}\t#{ratio}"
+end
+
