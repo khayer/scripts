@@ -36,7 +36,7 @@ end
 combined_vcf = ARGV[0]
 target_pos = ARGV[1].to_i + 8
 control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
-total_number_of_bases_in_chromosome = ARGV[3].to_i
+current_chromosome = ARGV[3]
 
 window_size = 660000
 window_first = window_size
@@ -52,8 +52,14 @@ positions = Array.new
 homozygous = Array.new
 total_bases_examined = 0
 
+chr_lengths = Hash.new()
 
 File.open(combined_vcf).each do |line|
+  if line =~ /ID=chr/
+    leng = line.split("=")[-1].split(">")[0].to_i
+    chr = line.split("=")[-2].split(",")[0]
+    chr_lengths[chr] = leng
+  end
   next if line =~ /^#/  # getting rid of header lines
   line.chomp!
   line = line.split("\t")
@@ -126,6 +132,8 @@ File.open(combined_vcf).each do |line|
     window_first += window_size
    end
 end
+
+total_number_of_bases_in_chromosome = chr_lengths[current_chromosome]
 
 positions.each_with_index do |pos,i|
   ratio = homozygous[i].to_f * total_bases_examined.to_f/total_number_of_bases_in_chromosome.to_f
