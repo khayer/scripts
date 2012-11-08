@@ -39,7 +39,7 @@ control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
 current_chromosome = ARGV[3]
 
 window_size = 660000
-window_first = window_size
+window_first = 0
 window_second = window_size/2
 
 
@@ -67,7 +67,7 @@ File.open(combined_vcf).each do |line|
   next if target_info =~ /\.\/\./ # If target_info = "./." we move on
   #next unless snp_homo?(target_info)
   target_info = target_info.split(":")
-  next unless target_info[2].to_i > 9
+  next unless target_info[2].to_f > 5.0
   target_genotype = target_info[0]
 
   all_genotypes = Array.new()
@@ -76,7 +76,7 @@ File.open(combined_vcf).each do |line|
   all_pos = [control_positions , target_pos].flatten
   all_pos.each do |current_sample_number|
     unless line[current_sample_number] =~ /\.\/\./
-      next unless line[current_sample_number].split(":")[2].to_i > 9
+      next unless line[current_sample_number].split(":")[2].to_f > 5.0
       all_genotypes << line[current_sample_number].split(":")[0]
       line[current_sample_number].split(":")[1].split(",").each_with_index do |number, index|
         all_read_numbers[index] += number.to_i
