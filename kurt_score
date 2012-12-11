@@ -73,7 +73,8 @@ File.open(combined_vcf).each do |line|
   all_genotypes = Array.new()
   all_read_numbers = Array.new(8,0)
   coverage = 0
-  all_pos = [control_positions , target_pos].flatten
+  all_pos = [target_pos].flatten
+  #all_pos = [control_positions , target_pos].flatten
   all_pos.each do |current_sample_number|
     unless line[current_sample_number] =~ /\.\/\./
       next unless line[current_sample_number].split(":")[2].to_f > 5.0
