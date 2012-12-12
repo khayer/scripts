@@ -73,8 +73,9 @@ File.open(combined_vcf).each do |line|
   all_genotypes = Array.new()
   all_read_numbers = Array.new(8,0)
   coverage = 0
-  all_pos = [target_pos].flatten
+  all_pos = [control_positions].flatten
   #all_pos = [control_positions , target_pos].flatten
+  #puts line
   all_pos.each do |current_sample_number|
     unless line[current_sample_number] =~ /\.\/\./
       next unless line[current_sample_number].split(":")[2].to_f > 5.0
@@ -82,12 +83,15 @@ File.open(combined_vcf).each do |line|
       line[current_sample_number].split(":")[1].split(",").each_with_index do |number, index|
         all_read_numbers[index] += number.to_i
       end
+      #puts all_read_numbers.join(":")
+      #puts all_genotypes.join(":")
+      #STDIN.gets
       coverage += line[current_sample_number].split(":")[2].to_i
     end
   end
 
   fraction = (all_read_numbers.max.to_f / coverage.to_f)
-  next unless fraction < 0.75
+  next unless fraction < 0.9
 
   if snp_homo?(target_info[0])
     homozygous_snps_first_window += 1
