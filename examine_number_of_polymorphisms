@@ -2,7 +2,7 @@
 
 usage =<<EOF
 
-  #{$0} combined.vcf target_pos
+  #{$0} combined.vcf target_pos out_file
  -----------------------------------------
   Examined numbers by chromosome and by position
   on chromosomes
@@ -30,16 +30,17 @@ def snp_homo?(info)
 end
 
 # _ Main _:
-if ARGV.length != 2
+if ARGV.length != 3
   puts usage
   exit
 end
 
 combined_vcf = ARGV[0]
 target_pos = ARGV[1].to_i + 8
+out_file = ARGV[2]
 window_length = 250000
 
-randy = Random.rand(100000)+1
+#randy = Random.rand(100000)+1
 counter = 0
 snps = []
 
@@ -57,7 +58,7 @@ File.open(combined_vcf).each do |line|
   snps[position/window_length] += 1
 end
 
-out = File.open("#{randy}_poly.txt","w")
+out = File.open("#{out_file}_poly.txt","w")
 snps.each_with_index do |snp,i|
   if snp
     out.puts("#{i*window_length}\t#{snp/counter.to_f}")
