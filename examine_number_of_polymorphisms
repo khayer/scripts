@@ -43,6 +43,7 @@ window_length = 250000
 #randy = Random.rand(100000)+1
 counter = 0
 snps = []
+chromosome = ''
 
 File.open(combined_vcf).each do |line|
   next if line =~ /^#/  # getting rid of header lines
@@ -66,6 +67,6 @@ snps.each_with_index do |snp,i|
   end
 end
 
-puts counter
+puts "#{chromosome}\t#{counter}"
 
 
