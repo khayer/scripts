@@ -2,7 +2,7 @@
 
 usage =<<EOF
 
-  #{$0} combined.vcf target_pos control,pos,ition,s
+  #{$0} combined.vcf target_pos control,pos,ition,s current_chromosome
  -----------------------------------------
   Homozygosity Score is definied as:
     total # of bases examined / total # bases on chromosome
