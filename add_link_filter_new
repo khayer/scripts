@@ -24,7 +24,7 @@ end
 def snp_unique?(sample_genotype,sample_genotype_quality)
   k = true
   sample_genotype.each_with_index do |genotype,i|
-    k = false if ((genotype =~ /1\/1/ || genotype =~ /0\/1/ || genotype =~ /2\/2/|| genotype =~ /1\/2/ || genotype =~ /0\/2/) && sample_genotype_quality[i] >= 20)
+    k = false if ((genotype =~ /1\/1/ || genotype =~ /0\/1/ || genotype =~ /2\/2/|| genotype =~ /1\/2/ || genotype =~ /0\/2/) && sample_genotype_quality[i] >= 5)
   end
   k
 end
