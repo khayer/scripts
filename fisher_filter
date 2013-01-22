@@ -1,0 +1,232 @@
+#!/usr/bin/env ruby
+require 'spreadsheet'
+require 'csv'
+
+### Functions #######################################################
+#####################################################################
+
+def get_sample_names(vcf_file)
+  sample_names = []
+  File.open(vcf_file).each do |line|
+    next unless line =~ /^\#CHROM/
+    sample_names = line.split("FORMAT\t")[1].split("\t")
+    break
+  end
+  sample_names
+end
+
+def make_link(pos, location)
+  location = location.delete("chr")
+  pos_l = (pos - 10).to_s
+  pos_r = (pos + 10).to_s
+  link = "http://www.ensembl.org/Danio_rerio/Location/View?r=#{location}:#{pos_l}-#{pos_r}"
+end
+
+def make_link_refSeq(snpeff_transcript_id)
+  snpeff_transcript_id = snpeff_transcript_id.split(".")[0]
+  link = "http://www.ncbi.nlm.nih.gov/nuccore/#{snpeff_transcript_id}"
+end
+
+def make_link_ensembl(ensemble_id)
+  link = "http://useast.ensembl.org/Danio_rerio/Gene/Summary?db=core;g=#{ensemble_id}"
+end
+
+def snp_unique?(sample_genotype,sample_genotype_quality)
+  k = true
+  sample_genotype.each_with_index do |genotype,i|
+    k = false if ((genotype =~ /1\/1/ || genotype =~ /0\/1/ || genotype =~ /2\/2/|| genotype =~ /1\/2/ || genotype =~ /0\/2/) && sample_genotype_quality[i] >= 5)
+  end
+  k
+end
+
+#def get_score(location, pos, seg)
+#  lower = pos - 25000
+#  upper = pos + 25000
+#  scores = `grep -w #{location} #{seg}| awk '$3 > #{lower} {print $0}' | awk '$3 < #{upper} {print $0}'`
+#  highest = 0
+#  scores = scores.split("\n")
+#  scores.each do |line|
+#    line = line.split("\t")
+#    highest = line[-1].to_i if line[-1].to_i > highest
+#  end
+#  highest
+#end
+
+
+### Main ############################################################
+#####################################################################
+
+usage =<<EOF
+
+      #{$0} in.vcf out.xls target control,number,s
+
+      ------------------------------------------------------
+      * in.vcf   :: with header for sample_names
+      * out.xls  :: output file with filtered for target
+      * target   :: position in vcf file
+      * control  :: control_numbers in vcf file
+      ------------------------------------------------------
+
+                                                   by khayer
+
+EOF
+
+if ARGV.length != 4
+  puts usage
+  exit
+end
+
+vcf_file = ARGV[0]
+xls_doc = ARGV[1]
+target_number = ARGV[2].to_i + 8
+control_numbers = ARGV[3].split(",").map {|ele| ele.to_i + 8}
+
+sample_order = [ARGV[2],ARGV[3].split(",")].flatten
+sample_order = sample_order.map {|ele| ele.to_i}
+sample_names = get_sample_names(vcf_file)
+
+book = Spreadsheet::Workbook.new
+sheet1 = book.create_worksheet
+sheet1.row(0).push '#CHROM','POS','REF','ALT','Read Depth', 'Impact', 'Effect', 'Codon Change', 'Gen Name','Phast Cons','PC-Start','PC-End' ,'Score'
+sample_order.each do |order|
+  sheet1.row(0).push "#{sample_names[order]}_Genotype", "#{sample_names[order]}_Allele_Depth", "#{sample_names[order]}_Read_Depth","#{sample_names[order]}_GT_Quality"
+end
+
+format1 = Spreadsheet::Format.new :weight => :bold
+sheet1.row(0).default_format = format1
+i = 1
+dummy = ""
+locator = Hash.new()
+number_of_samples = sample_names.length()
+location_first = "dummy"
+
+File.open(vcf_file).each do |line|
+  next if line =~ /^#/
+
+  line  = line.split("\t")
+  location = line[0]
+  target_fields = line[target_number]
+  target_fields = target_fields.split(":")
+  next if target_fields[0] =~ /0\/0/ || target_fields[0] =~ /\.\/\./
+
+  if location != location_first
+    puts location
+    location_first = location
+  end
+
+  if target_fields[0] =~ /0\/1/ || target_fields[0] =~ /0\/2/
+    allele_depth = target_fields[1].split(",")
+    next if (allele_depth[0].to_i) >= allele_depth[1].to_i
+    ### next if (2*allele_depth[0].to_i) >= allele_depth[1].to_i
+    next unless target_fields[2].to_i >= 2
+    ### next unless (target_fields[2].to_i >= 3 && target_fields[3].to_f < 25.0 && (target_fields[0] =~ /0\/1/ || target_fields[0] =~ /0\/2/  ))
+  else
+    next unless (target_fields[3].to_f > 1 && (target_fields[0] =~ /1\/1/ || target_fields[0] =~ /2\/2/  ))
+  end
+  #AC=2;AF=1.00;AN=2;BaseQRankSum=1.162;DP=31;Dels=0.00;FS=2.741;HRun=0;HaplotypeScore=0.0000;MQ=51.54;MQ0=0;MQRankSum=-0.473;QD=18.91;ReadPosRankSum=-2.109;SB=-245.55;SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
+  #SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
+  position = line[1].to_i
+  link = make_link(position, location)
+  info = line[7]
+
+  score = line[-1].to_f
+  #next if score < 0.70
+  phast_cons = line[-2]
+  phast_start = line[-4]
+  phast_end = line[-3]
+  allele_frequency = info.split("AF=")[-1].split(";")[0].to_f
+  read_depth = info.split("DP=")[-1].split(";")[0].to_i
+  impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
+  gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
+  effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
+  snpeff_transcript_id = info.split("SNPEFF_TRANSCRIPT_ID=")[-1].split(";")[0]
+  if snpeff_transcript_id =~ /^ENS/
+    link_transcript_id = make_link_ensembl(snpeff_transcript_id)
+  else
+    link_transcript_id = make_link_refSeq(snpeff_transcript_id)
+  end
+  codon_change = "-"
+  codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0] if effect == "NON_SYNONYMOUS_CODING"
+  #puts info if codon_change == "-"
+  puts position if position%5000 == 0
+  #break if position > 100000
+
+
+
+  #if dummy != location
+  #  dummy = location
+  #  locator[location] = i
+  #end
+  #sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4],line[5].to_i, allele_frequency, read_depth,  impact, effect, codon_change, gene_name
+  sample_genotype = []
+  sample_allele_depth = []
+  sample_read_depth = []
+  sample_genotype_quality = []
+  sample_likelihood = []
+  control_numbers.each do |control_number|
+    sample_info = line[control_number]
+    sample_info = "-:-" if sample_info =~ /\.\/\./
+    sample_info = sample_info.split(":")
+
+
+    sample_genotype << sample_info[0]
+    sample_allele_depth << sample_info[1]
+    sample_read_depth << sample_info[2].to_i
+    sample_genotype_quality << sample_info[3].to_f
+    if sample_info[4]
+      sample_likelihood << sample_info[4]
+    else
+      sample_likelihood << "-"
+    end
+  end
+  #puts target_fields.join(":")
+  #puts line.join("\t")
+  #puts sample_genotype.join(":")
+
+
+  if (target_fields[0] =~ /1\/1/ && impact=="HIGH"  && snp_unique?(sample_genotype,sample_genotype_quality))
+    #score = get_score(location,position,seg)
+    sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :green, :color => :white
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
+    sheet1.row(i).push target_fields[0], target_fields[1], target_fields[2], target_fields[3]
+    sample_genotype.each_with_index do |genotype, index|
+      sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index]
+    end
+
+    i += 1
+
+  elsif (target_fields[0] =~ /1\/1/ && impact=="MODERATE" && snp_unique?(sample_genotype,sample_genotype_quality))
+  #elsif (sample_genotype[0] == "1/1" &&  !sample_genotype.values_at(1..-1).include?("1/1"))
+    #score = get_score(location,position,seg)
+    sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :orange, :color => :white
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
+
+    sheet1.row(i).push target_fields[0], target_fields[1], target_fields[2], target_fields[3]
+
+    sample_genotype.each_with_index do |genotype, index|
+      sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index]
+    end
+
+    i += 1
+  elsif snp_unique?(sample_genotype,sample_genotype_quality) && (impact=="HIGH" || impact=="MODERATE" )
+    #score = get_score(location,position,seg)
+
+    sheet1.update_row i, Spreadsheet::Link.new(link,location), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
+
+    sheet1.row(i).push target_fields[0], target_fields[1], target_fields[2], target_fields[3]
+
+    sample_genotype.each_with_index do |genotype, index|
+      sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index], sample_genotype_quality[index]
+    end
+
+    i += 1
+
+  end
+
+
+
+
+end
+
+
+book.write xls_doc
