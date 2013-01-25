@@ -106,19 +106,10 @@ File.open(combined_vcf).each do |line|
 
   if control_homo.index(true) == control_homo.rindex(true) &&
       control_homo.index(true) != nil
-    #total_number[homozygous.index(1)] += 1
     control_homo_first_window[control_homo.index(true)] += 1
     control_homo_second_window[control_homo.index(true)] += 1
     snp_homo_unique_total[control_homo.index(true)] += 1
   end
-
-  #STDERR.puts control_homo.join(":")
-
-  #b = control_homo.inject(Hash.new(0)) {|h,i| h[i] += 1; h }
-  #b.to_a.each {|error,count| puts "#{count}: #{error}" if error == true }
-  #STDERR.puts control_homo_first_window.join(":")
-
-
 
   next unless snp_homo?(target_info[0])
   next if target_info[2].to_i < 6
@@ -150,9 +141,6 @@ File.open(combined_vcf).each do |line|
 
    when "first_done"
     STDERR.puts window_first
-    #STDERR.puts window_first
-    ##STDERR.puts sample_homo_first_window
-    #STDERR.puts control_homo_first_window
     first_window_values << [window_first,sample_homo_first_window,control_homo_first_window]
 
     sample_homo_first_window = Array.new(control_positions.length,0)
