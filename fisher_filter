@@ -170,7 +170,7 @@ File.open(vcf_file).each do |line|
   #end
 
   next unless homozygous?(target_fields[0]) &&
-    (target_fields[2].to_i >= $x_cutoff
+    (target_fields[2].to_i >= $x_cutoff)
 
   sib_fields = line[sib_number].split(":")
   next unless heterozygous?(sib_fields[0])
