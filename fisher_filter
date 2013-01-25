@@ -87,20 +87,26 @@ end
 
 usage =<<EOF
 
-      #{$0} in.vcf out.xls target control,number,s
+      #{$0} in.vcf out.xls target sib control
 
       ------------------------------------------------------
       * in.vcf   :: with header for sample_names
       * out.xls  :: output file with filtered for target
       * target   :: position in vcf file
-      * control  :: control_numbers in vcf file
+      * sib      :: position in vcf file
+      * control  :: positions of TLF and Wik
       ------------------------------------------------------
+
+      Searches for mutations that are homozygous for
+      the mutant while heterozygous for the sib.
+      They mutation should not be present in either TLF or
+      Wik.
 
                                                    by khayer
 
 EOF
 
-if ARGV.length != 4
+if ARGV.length != 5
   puts usage
   exit
 end
@@ -110,12 +116,14 @@ $x_cutoff = 8
 $quality_cutoff = 5.0
 ##############
 
-vcf_file = ARGV[0]
-xls_doc = ARGV[1]
-target_number = ARGV[2].to_i + 8
-control_numbers = ARGV[3].split(",").map {|ele| ele.to_i + 8}
+### PREPARATION
+vcf_file        = ARGV[0]
+xls_doc         = ARGV[1]
+target_number   = ARGV[2].to_i + 8
+sib_number      = ARGV[3].to_i + 8
+control_numbers = ARGV[4].split(",").map {|ele| ele.to_i + 8}
 
-sample_order = [ARGV[2],ARGV[3].split(",")].flatten
+sample_order = [ARGV[2],ARGV[3],ARGV[4].split(",")].flatten
 sample_order = sample_order.map {|ele| ele.to_i}
 sample_names = get_sample_names(vcf_file)
 
@@ -125,9 +133,11 @@ sheet1.row(0).push '#CHROM','POS','REF','ALT','Read Depth', 'Impact', 'Effect', 
 sample_order.each do |order|
   sheet1.row(0).push "#{sample_names[order]}_Genotype", "#{sample_names[order]}_Allele_Depth", "#{sample_names[order]}_Read_Depth","#{sample_names[order]}_GT_Quality"
 end
-
 format1 = Spreadsheet::Format.new :weight => :bold
 sheet1.row(0).default_format = format1
+###############
+
+### MAIN
 i = 1
 dummy = ""
 locator = Hash.new()
@@ -140,8 +150,7 @@ File.open(vcf_file).each do |line|
 
   line  = line.split("\t")
   chromosome = line[0]
-  target_fields = line[target_number]
-  target_fields = target_fields.split(":")
+  target_fields = line[target_number].split(":")
   next unless snp?(target_fields[0])
 
   if chromosome != current_chromosome
@@ -149,16 +158,22 @@ File.open(vcf_file).each do |line|
     current_chromosome = chromosome
   end
 
-  if heterozygous?(target_fields[0])
-    allele_depth = target_fields[1].split(",")
-    # There should be more reads with mutation than without
-    next if (allele_depth[0].to_i) >= allele_depth[1].to_i
-    # There should be at least X reads to cover this location
-    next unless target_fields[2].to_i >= $x_cutoff
-  else
-    next unless (target_fields[2].to_i >= $x_cutoff &&
-      homozygous?(target_fields[0]))
-  end
+  #if heterozygous?(target_fields[0])
+  #  allele_depth = target_fields[1].split(",")
+  #  # There should be more reads with mutation than without
+  #  next if (allele_depth[0].to_i) >= allele_depth[1].to_i
+  #  # There should be at least X reads to cover this location
+  #  next unless target_fields[2].to_i >= $x_cutoff
+  #else
+  #  next unless
+  #    homozygous?(target_fields[0]))
+  #end
+
+  next unless homozygous?(target_fields[0]) &&
+    (target_fields[2].to_i >= $x_cutoff
+
+  sib_fields = line[sib_number].split(":")
+  next unless heterozygous(sib_fields[0])
 
   #AC=2;AF=1.00;AN=2;BaseQRankSum=1.162;DP=31;Dels=0.00;FS=2.741;HRun=0;HaplotypeScore=0.0000;MQ=51.54;MQ0=0;MQRankSum=-0.473;QD=18.91;ReadPosRankSum=-2.109;SB=-245.55;SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
   #SNPEFF_AMINO_ACID_CHANGE=L29Q;SNPEFF_CODON_CHANGE=cTg/cAg;SNPEFF_EFFECT=NON_SYNONYMOUS_CODING;SNPEFF_EXON_ID=exon_5_72362306_72362366;SNPEFF_FUNCTIONAL_CLASS=MISSENSE;SNPEFF_GENE_BIOTYPE=protein_coding;SNPEFF_GENE_NAME=psat1;SNPEFF_IMPACT=MODERATE;SNPEFF_TRANSCRIPT_ID=ENSDART00000023983
@@ -166,10 +181,10 @@ File.open(vcf_file).each do |line|
   position = line[1].to_i
   link = make_link(position, chromosome)
 
-  score = "" # line[-1].to_f
-  phast_cons = "" # line[-2]
-  phast_start = "" #line[-4]
-  phast_end = "" #line[-3]
+  score = line[-1].to_f
+  phast_cons = line[-2]
+  phast_start = line[-4]
+  phast_end = line[-3]
   info = line[7]
   allele_frequency = info.split("AF=")[-1].split(";")[0].to_f
   read_depth = info.split("DP=")[-1].split(";")[0].to_i
@@ -249,15 +264,9 @@ File.open(vcf_file).each do |line|
     sample_genotypes.each_with_index do |genotype, index|
       sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index].to_i, sample_genotypes_quality[index].to_f
     end
-
     i += 1
-
   end
-
-
-
-
 end
 
-
 book.write xls_doc
+########
