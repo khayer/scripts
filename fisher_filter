@@ -113,7 +113,7 @@ end
 
 ### PARAMETERS
 $x_cutoff = 8
-$quality_cutoff = 5.0
+$quality_cutoff = 4.0
 ##############
 
 ### PREPARATION
@@ -152,6 +152,7 @@ File.open(vcf_file).each do |line|
   chromosome = line[0]
   target_fields = line[target_number].split(":")
   next unless snp?(target_fields[0])
+  next unless target_fields[3].to_i >= 50
 
   if chromosome != current_chromosome
     puts chromosome
@@ -235,6 +236,7 @@ File.open(vcf_file).each do |line|
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 , :pattern_fg_color => :green, :color => :white
     sheet1.update_row i, Spreadsheet::Link.new(link,chromosome), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
     sheet1.row(i).push target_fields[0], target_fields[1], target_fields[2].to_i, target_fields[3].to_f
+    sheet1.row(i).push sib_fields[0], sib_fields[1], sib_fields[2].to_i, sib_fields[3].to_f
     sample_genotypes.each_with_index do |genotype, index|
       sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index].to_i, sample_genotypes_quality[index].to_f
     end
@@ -260,7 +262,7 @@ File.open(vcf_file).each do |line|
     sheet1.update_row i, Spreadsheet::Link.new(link,chromosome), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
 
     sheet1.row(i).push target_fields[0], target_fields[1], target_fields[2].to_i, target_fields[3].to_f
-
+    sheet1.row(i).push sib_fields[0], sib_fields[1], sib_fields[2].to_i, sib_fields[3].to_f
     sample_genotypes.each_with_index do |genotype, index|
       sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index].to_i, sample_genotypes_quality[index].to_f
     end
