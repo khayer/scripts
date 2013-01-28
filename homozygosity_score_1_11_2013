@@ -117,7 +117,7 @@ File.open(combined_vcf).each do |line|
     if dummy
       #ratio = ( homozygous_snps_second_window.to_f / ( all_snps_second_window.to_f / window_size.to_f ))
       #puts "#{window_second}\t#{ratio}"
-      positions << window_second
+      positions << window_size/2
       homozygous << homozygous_snps_second_window
       homozygous_snps_second_window = 0
       all_snps_second_window = 0
