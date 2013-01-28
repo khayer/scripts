@@ -207,7 +207,7 @@ File.open(vcf_file).each do |line|
   #end
 
   sample_genotypes = []
-  sample_allele_depth = []
+  sample_allele_depths = []
   sample_read_depth = []
   sample_genotypes_quality = []
   sample_likelihood = []
@@ -217,7 +217,7 @@ File.open(vcf_file).each do |line|
     sample_info = sample_info.split(":")
 
     sample_genotypes << sample_info[0]
-    sample_allele_depth << sample_info[1]
+    sample_allele_depths << sample_info[1]
     sample_read_depth << sample_info[2].to_i
     sample_genotypes_quality << sample_info[3].to_f
     if sample_info[4]
@@ -226,9 +226,16 @@ File.open(vcf_file).each do |line|
       sample_likelihood << "-"
     end
   end
+  ancestor_do_not_have_mutation = true
+  sample_allele_depths.each do |sample_allele_depth|
+    sample_allele_depth = sample_allele_depth.split(",")
+    ancestor_do_not_have_mutation = false if
+      sample_allele_depth[1].to_i > sample_allele_depth[1].to_i
+  end
   #puts target_fields.join(":")
   #puts line.join("\t")
   #puts sample_genotypes.join(":")
+  next unless ancestor_do_not_have_mutation
 
 
   if (target_fields[0] =~ /1\/1/  && snp_unique?(target_fields[0],sample_genotypes,sample_genotypes_quality))
@@ -238,7 +245,7 @@ File.open(vcf_file).each do |line|
     sheet1.row(i).push target_fields[0], target_fields[1], target_fields[2].to_i, target_fields[3].to_f
     sheet1.row(i).push sib_fields[0], sib_fields[1], sib_fields[2].to_i, sib_fields[3].to_f
     sample_genotypes.each_with_index do |genotype, index|
-      sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index].to_i, sample_genotypes_quality[index].to_f
+      sheet1.row(i).push genotype, sample_allele_depths[index], sample_read_depth[index].to_i, sample_genotypes_quality[index].to_f
     end
 
     i += 1
@@ -264,7 +271,7 @@ File.open(vcf_file).each do |line|
     sheet1.row(i).push target_fields[0], target_fields[1], target_fields[2].to_i, target_fields[3].to_f
     sheet1.row(i).push sib_fields[0], sib_fields[1], sib_fields[2].to_i, sib_fields[3].to_f
     sample_genotypes.each_with_index do |genotype, index|
-      sheet1.row(i).push genotype, sample_allele_depth[index], sample_read_depth[index].to_i, sample_genotypes_quality[index].to_f
+      sheet1.row(i).push genotype, sample_allele_depths[index], sample_read_depth[index].to_i, sample_genotypes_quality[index].to_f
     end
     i += 1
   end
