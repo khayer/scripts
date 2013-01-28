@@ -189,9 +189,12 @@ File.open(vcf_file).each do |line|
   info = line[7]
   allele_frequency = info.split("AF=")[-1].split(";")[0].to_f
   read_depth = info.split("DP=")[-1].split(";")[0].to_i
-  impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
-  gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
-  effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
+  impact = "-"
+  impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0] if info.split("SNPEFF_IMPACT=").length > 1
+  gene_name = "-"
+  gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)") if info.split("SNPEFF_GENE_NAME=").length > 1
+  effect = "-"
+  effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0] if info.split("SNPEFF_EFFECT=").length > 1
   snpeff_transcript_id = info.split("SNPEFF_TRANSCRIPT_ID=")[-1].split(";")[0]
   if snpeff_transcript_id =~ /^ENS/
     link_transcript_id = make_link_ensembl(snpeff_transcript_id)
@@ -200,7 +203,10 @@ File.open(vcf_file).each do |line|
   end
   codon_change = "-"
   codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0] if effect == "NON_SYNONYMOUS_CODING"
+
+  ### STATUS BAR
   puts position if position%5000 == 0
+  ##############
 
   #if position >= 1000000
   #  break
