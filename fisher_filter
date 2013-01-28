@@ -244,7 +244,7 @@ File.open(vcf_file).each do |line|
   next unless ancestor_do_not_have_mutation
 
 
-  if (target_fields[0] =~ /1\/1/  && snp_unique?(target_fields[0],sample_genotypes,sample_genotypes_quality) && score > 0.21)
+  if (homozygous?(target_fields[0]) && snp_unique?(target_fields[0],sample_genotypes,sample_genotypes_quality) && score > 0.21)
     #score = get_score(chromosome,position,seg)
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 , :pattern_fg_color => :green, :color => :white
     sheet1.update_row i, Spreadsheet::Link.new(link,chromosome), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
@@ -269,7 +269,7 @@ File.open(vcf_file).each do |line|
   #  end
 #
   #  i += 1
-  elsif (target_fields[0] =~ /1\/1/  && snp_unique?(target_fields[0],sample_genotypes,sample_genotypes_quality) && score > 0.19)
+  elsif (homozygous?(target_fields[0])  && snp_unique?(target_fields[0],sample_genotypes,sample_genotypes_quality) && score > 0.19)
     #score = get_score(chromosome,position,seg)
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :orange, :color => :white
     sheet1.update_row i, Spreadsheet::Link.new(link,chromosome), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
@@ -281,7 +281,7 @@ File.open(vcf_file).each do |line|
 
     i += 1
 
-  elsif (target_fields[0] =~ /1\/1/  && snp_unique?(target_fields[0],sample_genotypes,sample_genotypes_quality))
+  elsif (homozygous?(target_fields[0])  && snp_unique?(target_fields[0],sample_genotypes,sample_genotypes_quality))
     #score = get_score(chromosome,position,seg)
     #sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :orange, :color => :white
     sheet1.update_row i, Spreadsheet::Link.new(link,chromosome), position, line[3],line[4], read_depth,  impact, effect, codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name),phast_cons, phast_start,phast_end , score
