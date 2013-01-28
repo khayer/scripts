@@ -230,7 +230,7 @@ File.open(vcf_file).each do |line|
   sample_allele_depths.each do |sample_allele_depth|
     sample_allele_depth = sample_allele_depth.split(",")
     ancestor_do_not_have_mutation = false if
-      sample_allele_depth[1].to_i > sample_allele_depth[1].to_i
+      sample_allele_depth[1].to_i >= sample_allele_depth[0].to_i
   end
   #puts target_fields.join(":")
   #puts line.join("\t")
