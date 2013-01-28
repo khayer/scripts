@@ -40,7 +40,7 @@ target_pos = ARGV[1].to_i + 8
 control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
 current_chromosome = ARGV[3]
 
-window_size = 660000
+window_size = 330000
 window_first = 0
 window_second = window_size/2
 
