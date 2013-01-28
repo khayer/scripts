@@ -42,7 +42,7 @@ current_chromosome = ARGV[3]
 
 window_size = 330000
 window_first = 0
-window_second = window_size/2
+window_second = -window_size/2
 
 
 all_snps_first_window = 0
@@ -62,8 +62,10 @@ File.open(combined_vcf).each do |line|
     chr = line.split("=")[-2].split(",")[0]
     chr_lengths[chr] = leng
   end
+
   next if line =~ /^#/  # getting rid of header lines
   line.chomp!
+
   line = line.split("\t")
   target_info = line[target_pos]
   next if target_info =~ /\.\/\./ # If target_info = "./." we move on
@@ -117,7 +119,7 @@ File.open(combined_vcf).each do |line|
     if dummy
       #ratio = ( homozygous_snps_second_window.to_f / ( all_snps_second_window.to_f / window_size.to_f ))
       #puts "#{window_second}\t#{ratio}"
-      positions << window_size/2
+      positions << window_second
       homozygous << homozygous_snps_second_window
       homozygous_snps_second_window = 0
       all_snps_second_window = 0
