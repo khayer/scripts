@@ -29,7 +29,7 @@ score_file.each do |score|
   score = score.split("\t")
   score_pos = score[0].to_i
   ups_score = score[number]
-  while line_vcf[1].to_i < score_pos
+  while line_vcf[1].to_i < (score_pos + 330000)
     puts "#{line_vcf.join("\t")}\t#{ups_score}"
     line_vcf = vcf.readline.chomp().split("\t")
   end
