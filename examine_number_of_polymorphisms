@@ -68,9 +68,9 @@ File.open(combined_vcf).each do |line|
   next unless snp_homo?(target_info) && snp_homo?(other_info)
   next unless target_info.split(":")[3].to_i >= 25 && other_info.split(":")[3].to_i >= 25
   next if target_info.split(":")[0] == other_info.split(":")[0]
-  puts target_info
-  puts other_info
-  STDIN.gets
+  #puts target_info
+  #puts other_info
+  #STDIN.gets
   counter += 1
   chromosome = line[0]
   position = line[1].to_i
