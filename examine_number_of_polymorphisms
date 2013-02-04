@@ -52,7 +52,7 @@ File.open(combined_vcf).each do |line|
   target_info = line[target_pos]
   next unless snp_exist?(target_info)
   next unless snp_homo?(target_info)
-  next unless target_info.split(":")[3].to_i >= 15
+  next unless target_info.split(":")[3].to_i >= 25
   puts target_info
   STDIN.gets
   counter += 1
