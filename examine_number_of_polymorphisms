@@ -65,8 +65,10 @@ end
 out = File.open("#{out_file}_poly.txt","w")
 snps.each_with_index do |snp,i|
   if snp
-    out.puts("#{i*window_length}\t#{snp/counter.to_f}")
-    out.puts("#{i*window_length+window_length-1}\t#{snp/counter.to_f}")
+    #out.puts("#{i*window_length}\t#{snp/counter.to_f}")
+    #out.puts("#{i*window_length+window_length-1}\t#{snp/counter.to_f}")
+    out.puts("#{i*window_length}\t#{snp}")
+    out.puts("#{i*window_length+window_length-1}\t#{snp}")
   end
 end
 
