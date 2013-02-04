@@ -52,6 +52,8 @@ File.open(combined_vcf).each do |line|
   target_info = line[target_pos]
   next unless snp_exist?(target_info)
   next unless snp_homo?(target_info)
+  puts target_info
+  STDIN.gets
   counter += 1
   chromosome = line[0]
   position = line[1].to_i
