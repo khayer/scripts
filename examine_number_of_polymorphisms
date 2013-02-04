@@ -17,7 +17,7 @@ usage =<<EOF
   ...
 
   Additionally this script produces histogramm files that
-  list the polomorphims by location.
+  list the polomorphisms by location.
 EOF
 
 # Functions:
@@ -51,7 +51,7 @@ File.open(combined_vcf).each do |line|
   line = line.split("\t")
   target_info = line[target_pos]
   next unless snp_exist?(target_info)
-  next if snp_homo?(target_info)
+  next unless snp_homo?(target_info)
   counter += 1
   chromosome = line[0]
   position = line[1].to_i
