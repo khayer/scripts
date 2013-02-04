@@ -2,22 +2,35 @@
 
 usage =<<EOF
 
-  #{$0} combined.vcf target_pos out_file
- -----------------------------------------
-  Examined numbers by chromosome and by position
-  on chromosomes
+      #{$0} comb target other out_file
 
-  format out:
+      ------------------------------------------------------
+      * comb     :: combined_vcf
+      * target   :: position in vcf file
+      * other    :: position in vcf file
+      * out      :: out_file
+      ------------------------------------------------------
 
-  position score
-  ...
-  chr1 5032
-  chr2 120343
-  chr3 489085
-  ...
+      - VERSION 2/4/2013 -----------------------------------
 
-  Additionally this script produces histogramm files that
-  list the polomorphisms by location.
+      ------------------------------------------------------
+      Examined numbers by chromosome and by position
+      on chromosomes
+
+      format out:
+
+      position score
+      ...
+      chr1 5032
+      chr2 120343
+      chr3 489085
+      ...
+
+      Additionally this script produces histogramm files that
+      list the polomorphisms by location.
+
+                                                       by khayer
+
 EOF
 
 # Functions:
@@ -26,18 +39,19 @@ def snp_exist?(info)
 end
 
 def snp_homo?(info)
-  (info =~ /1\/1/) || (info =~ /2\/2/) || (info =~ /3\/3/)
+  (info =~ /1\/1/) || (info =~ /2\/2/) || (info =~ /3\/3/) || (info =~ /0\/0/)
 end
 
 # _ Main _:
-if ARGV.length != 3
+if ARGV.length != 4
   puts usage
   exit
 end
 
 combined_vcf = ARGV[0]
 target_pos = ARGV[1].to_i + 8
-out_file = ARGV[2]
+other_pos = ARGV[2].to_i + 8
+out_file = ARGV[3]
 window_length = 125000
 
 #randy = Random.rand(100000)+1
@@ -50,11 +64,13 @@ File.open(combined_vcf).each do |line|
   line.chomp!
   line = line.split("\t")
   target_info = line[target_pos]
-  next unless snp_exist?(target_info)
-  next unless snp_homo?(target_info)
-  next unless target_info.split(":")[3].to_i >= 25
-  #puts target_info
-  #STDIN.gets
+  other_info = line[other_pos]
+  next unless snp_homo?(target_info) && snp_homo?(other_info)
+  next unless target_info.split(":")[3].to_i >= 25 && other_info.split(":")[3].to_i >= 25
+  next if target_info.split(":")[0] == other_info.split(":")[0]
+  puts target_info
+  puts other_info
+  STDIN.gets
   counter += 1
   chromosome = line[0]
   position = line[1].to_i
