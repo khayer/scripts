@@ -38,7 +38,7 @@ end
 combined_vcf = ARGV[0]
 target_pos = ARGV[1].to_i + 8
 out_file = ARGV[2]
-window_length = 250000
+window_length = 1250000
 
 #randy = Random.rand(100000)+1
 counter = 0
