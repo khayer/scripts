@@ -2,27 +2,6 @@
 
 usage =<<EOF
 
-  #{$0} combined.vcf target_pos control,pos,ition,s current_chromosome
- -----------------------------------------
-  Homozygosity Score is definied as:
-    total # of bases examined / total # bases on chromosome
-    in a 1MB window
-
-  control,pos,ition,s for Wik and TLF only!
-
-  format out:
-
-  position score
-  ...
-  500000 50
-  500001 50
-  500002 51
-  ...
-EOF
-
-
-usage =<<EOF
-
       #{$0} comb target control chrom
 
       ------------------------------------------------------
@@ -39,7 +18,7 @@ usage =<<EOF
       total # of bases examined / total # bases on chromosome
       in a 1MB window
 
-      control,pos,ition,s for Wik and TLF only!
+      control for Wik and TLF (background strands) only!
 
       format out:
 
@@ -96,40 +75,24 @@ File.open(combined_vcf).each do |line|
     chr = line.split("=")[-2].split(",")[0]
     chr_lengths[chr] = leng
   end
-
   next if line =~ /^#/  # getting rid of header lines
   line.chomp!
 
   line = line.split("\t")
   target_info = line[target_pos]
-  next if target_info =~ /\.\/\./ # If target_info = "./." we move on
+  next unless snp_exist?(target_info)
+  tlf_info = line[control_positions[0]]
+  wik_info = line[control_positions[1]]
+
+  next unless snp_homo?(tlf_info) && snp_homo?(wik_info)
+  next unless tlf_info.split(":")[3].to_i >= 25 && wik_info.split(":")[3].to_i >= 25
+  next if tlf_info.split(":")[0] == wik_info.split(":")[0]
+
+
   #next unless snp_homo?(target_info)
   target_info = target_info.split(":")
   next unless target_info[2].to_f > 5.0
   target_genotype = target_info[0]
-
-  all_genotypes = Array.new()
-  all_read_numbers = Array.new(8,0)
-  coverage = 0
-  all_pos = [control_positions].flatten
-  #all_pos = [control_positions , target_pos].flatten
-  #puts line
-  all_pos.each do |current_sample_number|
-    unless line[current_sample_number] =~ /\.\/\./
-      next unless line[current_sample_number].split(":")[2].to_f > 5.0
-      all_genotypes << line[current_sample_number].split(":")[0]
-      line[current_sample_number].split(":")[1].split(",").each_with_index do |number, index|
-        all_read_numbers[index] += number.to_i
-      end
-      #puts all_read_numbers.join(":")
-      #puts all_genotypes.join(":")
-      #STDIN.gets
-      coverage += line[current_sample_number].split(":")[2].to_i
-    end
-  end
-
-  fraction = (all_read_numbers.max.to_f / coverage.to_f)
-  next unless fraction < 0.50
 
   if snp_homo?(target_info[0])
     homozygous_snps_first_window += 1
