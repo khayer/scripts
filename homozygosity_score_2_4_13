@@ -42,6 +42,19 @@ def snp_homo?(info)
   (info =~ /0\/0/) || (info =~ /1\/1/) || (info =~ /2\/2/) || (info =~ /3\/3/)
 end
 
+def getScore(target_read_dis,tlf_read_dis,wik_read_dis)
+  score = 0.0 
+  
+  if tlf_read_dis[0] > tlf_read_dis[1]
+    score = target_read_dis[0].to_f / (target_read_dis[0].to_f + target_read_dis[1].to_f) 
+  else
+    score = target_read_dis[1].to_f / (target_read_dis[0].to_f + target_read_dis[1].to_f) 
+  end
+  score = 0.5 if score.nan?()  
+  #STDIN.gets
+  score
+end
+
 # _ Main _:
 if ARGV.length != 4
   puts usage
@@ -53,7 +66,7 @@ target_pos = ARGV[1].to_i + 8
 control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
 current_chromosome = ARGV[3]
 
-window_size = 660000
+window_size = 250000
 window_first = 0
 window_second = -window_size/2
 
@@ -62,12 +75,15 @@ all_snps_first_window = 0
 all_snps_second_window = 0
 homozygous_snps_first_window = 0
 homozygous_snps_second_window = 0
+score_first_window = 0.0
+score_second_window = 0.0
 dummy = false
 positions = Array.new
 homozygous = Array.new
 total_bases_examined = 0
 
 chr_lengths = Hash.new()
+scores = []
 
 File.open(combined_vcf).each do |line|
   if line =~ /ID=chr/
@@ -87,20 +103,22 @@ File.open(combined_vcf).each do |line|
   next unless snp_homo?(tlf_info) && snp_homo?(wik_info)
   next unless tlf_info.split(":")[3].to_i >= 25 && wik_info.split(":")[3].to_i >= 25
   next if tlf_info.split(":")[0] == wik_info.split(":")[0]
-
+  
+  tlf_info = tlf_info.split(":")
+  wik_info = wik_info.split(":")
 
   #next unless snp_homo?(target_info)
   target_info = target_info.split(":")
   next unless target_info[2].to_f > 5.0
-  target_genotype = target_info[0]
-
-  if snp_homo?(target_info[0])
-    homozygous_snps_first_window += 1
-    homozygous_snps_second_window += 1
-  end
-
-  all_snps_first_window += 1
-  all_snps_second_window += 1
+  #puts line
+  # TLF is closer to 1 / Wik closer to 0
+  target_read_dis = target_info[1].split(",")
+  tlf_read_dis = tlf_info[1].split(",")
+  wik_read_dis = wik_info[1].split(",")
+  score_first_window += getScore(target_read_dis,tlf_read_dis,wik_read_dis)
+  score_second_window += getScore(target_read_dis,tlf_read_dis,wik_read_dis)
+  homozygous_snps_first_window += 1
+  homozygous_snps_second_window += 1 
 
   position = line[1].to_i
   state = "nothing"
@@ -116,33 +134,42 @@ File.open(combined_vcf).each do |line|
     if dummy
       #ratio = ( homozygous_snps_second_window.to_f / ( all_snps_second_window.to_f / window_size.to_f ))
       #puts "#{window_second}\t#{ratio}"
+      scores << score_first_window / homozygous_snps_first_window.to_f
       positions << window_second
-      homozygous << homozygous_snps_second_window
       homozygous_snps_second_window = 0
       all_snps_second_window = 0
+      score_second_window = 0
       window_second += window_size
     else
       window_second += window_size
       homozygous_snps_second_window = 0
       all_snps_second_window = 0
+      score_second_window = 0
       dummy = true
     end
    when "first_done"
     #ratio = ( homozygous_snps_first_window.to_f / ( all_snps_first_window.to_f / window_size.to_f ))
     #puts "#{window_first}\t#{ratio}"
+    scores << score_first_window / homozygous_snps_first_window.to_f
     positions << window_first
-    homozygous << homozygous_snps_first_window
-    total_bases_examined += all_snps_first_window
+    #puts "HEREEEEE"
+    #puts homozygous_snps_first_window
+    #puts score_first_window
+    #puts score_first_window / homozygous_snps_first_window.to_f
+    #STDIN.gets
+    #total_bases_examined += all_snps_first_window
     homozygous_snps_first_window = 0
     all_snps_first_window = 0
     window_first += window_size
+    score_first_window = 0
    end
 end
 
-total_number_of_bases_in_chromosome = chr_lengths[current_chromosome]
+#total_number_of_bases_in_chromosome = chr_lengths[current_chromosome]
 
-positions.each_with_index do |pos,i|
-  ratio = homozygous[i].to_f * total_bases_examined.to_f/total_number_of_bases_in_chromosome.to_f
-  puts "#{pos}\t#{ratio}"
+scores.each_with_index do |score,i|
+  pos = positions[i]
+  #ratio = homozygous[i].to_f * total_bases_examined.to_f/total_number_of_bases_in_chromosome.to_f
+  puts "#{pos}\t#{score}"
 end
 
