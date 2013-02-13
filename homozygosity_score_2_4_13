@@ -43,14 +43,14 @@ def snp_homo?(info)
 end
 
 def getScore(target_read_dis,tlf_read_dis,wik_read_dis)
-  score = 0.0 
-  
+  score = 0.0
+
   if tlf_read_dis[0] > tlf_read_dis[1]
-    score = target_read_dis[0].to_f / (target_read_dis[0].to_f + target_read_dis[1].to_f) 
+    score = target_read_dis[0].to_f / (target_read_dis[0].to_f + target_read_dis[1].to_f)
   else
-    score = target_read_dis[1].to_f / (target_read_dis[0].to_f + target_read_dis[1].to_f) 
+    score = target_read_dis[1].to_f / (target_read_dis[0].to_f + target_read_dis[1].to_f)
   end
-  score = 0.5 if score.nan?()  
+  score = 0.5 if score.nan?()
   #STDIN.gets
   score
 end
@@ -103,7 +103,7 @@ File.open(combined_vcf).each do |line|
   next unless snp_homo?(tlf_info) && snp_homo?(wik_info)
   next unless tlf_info.split(":")[3].to_i >= 25 && wik_info.split(":")[3].to_i >= 25
   next if tlf_info.split(":")[0] == wik_info.split(":")[0]
-  
+
   tlf_info = tlf_info.split(":")
   wik_info = wik_info.split(":")
 
@@ -117,7 +117,7 @@ File.open(combined_vcf).each do |line|
   score_first_window += getScore(target_read_dis,tlf_read_dis,wik_read_dis)
   score_second_window += getScore(target_read_dis,tlf_read_dis,wik_read_dis)
   homozygous_snps_first_window += 1
-  homozygous_snps_second_window += 1 
+  homozygous_snps_second_window += 1
 
   position = line[1].to_i
   state = "nothing"
@@ -128,8 +128,7 @@ File.open(combined_vcf).each do |line|
     state = "first_done"
   end
 
-  case state
-   when "second_done"
+  if position > window_second
     if dummy
       #ratio = ( homozygous_snps_second_window.to_f / ( all_snps_second_window.to_f / window_size.to_f ))
       #puts "#{window_second}\t#{ratio}"
@@ -146,22 +145,17 @@ File.open(combined_vcf).each do |line|
       score_second_window = 0
       dummy = true
     end
-   when "first_done"
+  end
+  if position > window_first
     #ratio = ( homozygous_snps_first_window.to_f / ( all_snps_first_window.to_f / window_size.to_f ))
     #puts "#{window_first}\t#{ratio}"
     scores << score_first_window / homozygous_snps_first_window.to_f
     positions << window_first
-    #puts "HEREEEEE"
-    #puts homozygous_snps_first_window
-    #puts score_first_window
-    #puts score_first_window / homozygous_snps_first_window.to_f
-    #STDIN.gets
-    #total_bases_examined += all_snps_first_window
     homozygous_snps_first_window = 0
     all_snps_first_window = 0
     window_first += window_size
     score_first_window = 0
-   end
+  end
 end
 
 #total_number_of_bases_in_chromosome = chr_lengths[current_chromosome]
