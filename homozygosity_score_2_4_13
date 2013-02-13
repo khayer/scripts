@@ -18,7 +18,7 @@ usage =<<EOF
       total # of bases examined / total # bases on chromosome
       in a 1MB window
 
-      control for Wik and TLF (background strands) only!
+      control for Wik and TLF (background strains) only!
 
       format out:
 
@@ -89,7 +89,6 @@ File.open(combined_vcf).each do |line|
   next if tlf_info.split(":")[0] == wik_info.split(":")[0]
 
 
-  #next unless snp_homo?(target_info)
   target_info = target_info.split(":")
   next unless target_info[2].to_f > 5.0
   target_genotype = target_info[0]
