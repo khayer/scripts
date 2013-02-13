@@ -128,7 +128,8 @@ File.open(combined_vcf).each do |line|
     state = "first_done"
   end
 
-  if position > window_second
+#  if position > window_second
+  if homozygous_snps_second_window == 100
     if dummy
       #ratio = ( homozygous_snps_second_window.to_f / ( all_snps_second_window.to_f / window_size.to_f ))
       #puts "#{window_second}\t#{ratio}"
@@ -146,7 +147,8 @@ File.open(combined_vcf).each do |line|
       dummy = true
     end
   end
-  if position > window_first
+  #if position > window_first
+  if homozygous_snps_first_window == 100
     #ratio = ( homozygous_snps_first_window.to_f / ( all_snps_first_window.to_f / window_size.to_f ))
     #puts "#{window_first}\t#{ratio}"
     scores << score_first_window / homozygous_snps_first_window.to_f
