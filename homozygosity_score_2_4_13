@@ -74,7 +74,7 @@ window_second = -window_size/2
 all_snps_first_window = 0
 all_snps_second_window = 0
 homozygous_snps_first_window = 0
-homozygous_snps_second_window = 0
+homozygous_snps_second_window = 50
 score_first_window = 0.0
 score_second_window = 0.0
 dummy = false
@@ -134,7 +134,8 @@ File.open(combined_vcf).each do |line|
       #ratio = ( homozygous_snps_second_window.to_f / ( all_snps_second_window.to_f / window_size.to_f ))
       #puts "#{window_second}\t#{ratio}"
       scores << score_first_window / homozygous_snps_first_window.to_f
-      positions << window_second
+      #positions << window_second
+      positions << position
       homozygous_snps_second_window = 0
       all_snps_second_window = 0
       score_second_window = 0
@@ -152,7 +153,8 @@ File.open(combined_vcf).each do |line|
     #ratio = ( homozygous_snps_first_window.to_f / ( all_snps_first_window.to_f / window_size.to_f ))
     #puts "#{window_first}\t#{ratio}"
     scores << score_first_window / homozygous_snps_first_window.to_f
-    positions << window_first
+    #positions << window_first
+    positions << position
     homozygous_snps_first_window = 0
     all_snps_first_window = 0
     window_first += window_size
