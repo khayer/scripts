@@ -112,6 +112,7 @@ File.open(combined_vcf).each do |line|
   #puts line
   # TLF is closer to 1 / Wik closer to 0
   target_read_dis = target_info[1].split(",")
+  next if target_read_dis[0] == "0" || target_read_dis[1] == "0"
   tlf_read_dis = tlf_info[1].split(",")
   wik_read_dis = wik_info[1].split(",")
   current_score = getScore(target_read_dis,tlf_read_dis,wik_read_dis)
@@ -122,13 +123,13 @@ File.open(combined_vcf).each do |line|
   homozygous_snps_second_window += 1
 
   position = line[1].to_i
-  if position > 20000000
-    puts target_info.join(":")
-    puts tlf_info.join(":")
-    puts wik_info.join(":")
-    puts current_score
-    STDIN.gets
-  end
+  #if position > 20000000
+  #  puts target_info.join(":")
+  #  puts tlf_info.join(":")
+  #  puts wik_info.join(":")
+  #  puts current_score
+  #  STDIN.gets
+  #end
   state = "nothing"
   if position > window_second
     state = "second_done"
