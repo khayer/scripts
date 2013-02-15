@@ -106,20 +106,29 @@ File.open(combined_vcf).each do |line|
 
   tlf_info = tlf_info.split(":")
   wik_info = wik_info.split(":")
-
+  next unless tlf_info[2].to_f >= 15.0 && wik_info[2].to_f >= 15.0
   target_info = target_info.split(":")
-  next unless target_info[2].to_f > 5.0
+  next unless target_info[2].to_f >= 15.0
   #puts line
   # TLF is closer to 1 / Wik closer to 0
   target_read_dis = target_info[1].split(",")
   tlf_read_dis = tlf_info[1].split(",")
   wik_read_dis = wik_info[1].split(",")
-  score_first_window += getScore(target_read_dis,tlf_read_dis,wik_read_dis)
-  score_second_window += getScore(target_read_dis,tlf_read_dis,wik_read_dis)
+  current_score = getScore(target_read_dis,tlf_read_dis,wik_read_dis)
+
+  score_first_window += current_score #getScore(target_read_dis,tlf_read_dis,wik_read_dis)
+  score_second_window += current_score #getScore(target_read_dis,tlf_read_dis,wik_read_dis)
   homozygous_snps_first_window += 1
   homozygous_snps_second_window += 1
 
   position = line[1].to_i
+  if position > 20000000
+    puts target_info.join(":")
+    puts tlf_info.join(":")
+    puts wik_info.join(":")
+    puts current_score
+    STDIN.gets
+  end
   state = "nothing"
   if position > window_second
     state = "second_done"
