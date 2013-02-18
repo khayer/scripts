@@ -68,6 +68,10 @@ File.open(combined_vcf).each do |line|
   next unless snp_homo?(target_info) && snp_homo?(other_info)
   next unless target_info.split(":")[3].to_i >= 25 && other_info.split(":")[3].to_i >= 25
   next if target_info.split(":")[0] == other_info.split(":")[0]
+
+  tlf_info = target_info.split(":")
+  wik_info = other_info.split(":")
+  next unless tlf_info[2].to_f >= 15.0 && wik_info[2].to_f >= 15.0
   #puts target_info
   #puts other_info
   #STDIN.gets
