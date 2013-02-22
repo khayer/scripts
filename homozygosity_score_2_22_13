@@ -2,14 +2,14 @@
 
 usage =<<EOF
 
-      #{$0} comb target control chrom snps
+      #{$0} comb target control chrom (snps)
 
       ------------------------------------------------------
       * comb     :: combined_vcf
       * target   :: position in vcf file
       * control  :: position in vcf file (seperated by ,)
       * chrom    :: current chromosome
-      * snps     :: file to write polymorphisms to
+      * snps     :: same as current chromosome
       ------------------------------------------------------
 
       - VERSION 2/22/2013 -----------------------------------
@@ -57,7 +57,7 @@ def getScore(target_read_dis,tlf_read_dis,wik_read_dis)
 end
 
 # _ Main _:
-if ARGV.length != 5
+if ARGV.length != 4
   puts usage
   exit
 end
@@ -66,7 +66,7 @@ combined_vcf = ARGV[0]
 target_pos = ARGV[1].to_i + 8
 control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
 current_chromosome = ARGV[3]
-snps_file = ARGV[4]
+#snps_file = ARGV[4]
 
 window_length = 250000
 window_first = 0
@@ -190,7 +190,7 @@ scores.each_with_index do |score,i|
   puts "#{pos}\t#{score}"
 end
 
-out = File.open("#{snps_file}_poly.txt","w")
+out = File.open("#{current_chromosome}_poly.txt","w")
 snps.each_with_index do |snp,i|
   if snp
     #out.puts("#{i*window_length}\t#{snp/counter.to_f}")
