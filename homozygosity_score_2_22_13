@@ -2,7 +2,7 @@
 
 usage =<<EOF
 
-      #{$0} comb target control chrom snps [num]
+      #{$0} comb target control chrom snps [num] [window]
 
       ------------------------------------------------------
       * comb     :: combined_vcf
@@ -11,6 +11,7 @@ usage =<<EOF
       * chrom    :: current chromosome
       * snps     :: outfile
       * num      :: min_number_of_reads
+      * window   :: snp_window
       ------------------------------------------------------
 
       - VERSION 2/22/2013 -----------------------------------
@@ -69,6 +70,7 @@ control_positions = ARGV[2].split(",").map {|ele| ele.to_i + 8}
 current_chromosome = ARGV[3]
 snps_file = ARGV[4]
 min_number_of_reads = ARGV[5].to_f if ARGV[5]
+snp_window = ARGV[6].to_i if ARGV[6]
 
 window_length = 250000
 window_first = 0
@@ -86,6 +88,7 @@ positions = Array.new
 homozygous = Array.new
 total_bases_examined = 0
 min_number_of_reads = 15.0 unless min_number_of_reads
+snp_window = 100 unless snp_window
 chr_lengths = Hash.new()
 scores = []
 
@@ -151,7 +154,7 @@ File.open(combined_vcf).each do |line|
   end
 
 #  if position > window_second
-  if homozygous_snps_second_window == 100
+  if homozygous_snps_second_window == snp_window
     if dummy
       #ratio = ( homozygous_snps_second_window.to_f / ( all_snps_second_window.to_f / window_size.to_f ))
       #puts "#{window_second}\t#{ratio}"
@@ -171,7 +174,7 @@ File.open(combined_vcf).each do |line|
     end
   end
   #if position > window_first
-  if homozygous_snps_first_window == 100
+  if homozygous_snps_first_window == snp_window
     #ratio = ( homozygous_snps_first_window.to_f / ( all_snps_first_window.to_f / window_size.to_f ))
     #puts "#{window_first}\t#{ratio}"
     scores << score_first_window / homozygous_snps_first_window.to_f
