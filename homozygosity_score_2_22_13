@@ -38,7 +38,7 @@ EOF
 
 # Functions:
 def snp_exist?(info)
-  !(info =~ /\.\/\./) && !(info =~ /0\/0/)
+  !(info =~ /\.\/\./) #&& !(info =~ /0\/0/)
 end
 
 def snp_homo?(info)
@@ -48,7 +48,7 @@ end
 def getScore(target_read_dis,tlf_read_dis,wik_read_dis)
   score = 0.0
 
-  if tlf_read_dis[0] > tlf_read_dis[1]
+  if tlf_read_dis[0].to_f > tlf_read_dis[1].to_f
     score = target_read_dis[0].to_f / (target_read_dis[0].to_f + target_read_dis[1].to_f)
   else
     score = target_read_dis[1].to_f / (target_read_dis[0].to_f + target_read_dis[1].to_f)
@@ -108,6 +108,7 @@ File.open(combined_vcf).each do |line|
   line = line.split("\t")
   target_info = line[target_pos]
   next unless snp_exist?(target_info)
+
   tlf_info = line[control_positions[0]]
   wik_info = line[control_positions[1]]
 
@@ -121,13 +122,23 @@ File.open(combined_vcf).each do |line|
   target_info = target_info.split(":")
   next unless target_info[2].to_f >= min_number_of_reads
   #puts line
+  #puts target_info
+  #STDIN.gets
   # TLF is closer to 1 / Wik closer to 0
   target_read_dis = target_info[1].split(",")
-  next if target_read_dis[0] == "0" || target_read_dis[1] == "0"
+
   tlf_read_dis = tlf_info[1].split(",")
   wik_read_dis = wik_info[1].split(",")
   current_score = getScore(target_read_dis,tlf_read_dis,wik_read_dis)
-
+  if target_read_dis[0] == "0" || target_read_dis[1] == "0"
+    puts current_score
+    puts target_info
+    puts "TLF"
+    puts tlf_info
+    puts "Wik"
+    puts wik_info
+    STDIN.gets
+  end
   score_first_window += current_score #getScore(target_read_dis,tlf_read_dis,wik_read_dis)
   score_second_window += current_score #getScore(target_read_dis,tlf_read_dis,wik_read_dis)
   homozygous_snps_first_window += 1
