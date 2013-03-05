@@ -116,10 +116,17 @@ File.open(combined_vcf).each do |line|
   next unless tlf_info.split(":")[3].to_i >= 25 && wik_info.split(":")[3].to_i >= 25
   next if tlf_info.split(":")[0] == wik_info.split(":")[0]
 
+
   tlf_info = tlf_info.split(":")
   wik_info = wik_info.split(":")
   next unless tlf_info[2].to_f >= 15.0 && wik_info[2].to_f >= 15.0
+  next unless tlf_info[1].split(",")[0] == "0" || tlf_info[1].split(",")[1] == "0"
+  next unless wik_info[1].split(",")[0] == "0" || wik_info[1].split(",")[1] == "0"
+  #puts tlf_info
+  #puts wik_info
+  #STDIN.gets
   target_info = target_info.split(":")
+
   next unless target_info[2].to_f >= min_number_of_reads
   #puts line
   #puts target_info
@@ -149,6 +156,10 @@ File.open(combined_vcf).each do |line|
   counter += 1
   snps[position/window_length] = 0 unless snps[position/window_length]
   snps[position/window_length] += 1
+  puts position
+  puts position/window_length
+  #puts snps
+  STDIN.gets
   #if position > 20000000
   #  puts target_info.join(":")
   #  puts tlf_info.join(":")
@@ -208,12 +219,16 @@ end
 
 out = File.open("#{snps_file}_poly.txt","w")
 snps.each_with_index do |snp,i|
+  k = i
   if snp
     #out.puts("#{i*window_length}\t#{snp/counter.to_f}")
     #out.puts("#{i*window_length+window_length-1}\t#{snp/counter.to_f}")
     #puts snp
-    out.puts("#{i*window_length}\t#{snp}")
-    out.puts("#{i*window_length+window_length-1}\t#{snp}")
+    out.puts("#{k*window_length}\t#{snp}")
+    out.puts("#{k*window_length+window_length-1}\t#{snp}")
+  else
+    out.puts("#{k*window_length}\t0")
+    out.puts("#{k*window_length+window_length-1}\t0")
   end
 end
 
