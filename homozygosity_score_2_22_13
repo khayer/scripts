@@ -156,10 +156,10 @@ File.open(combined_vcf).each do |line|
   counter += 1
   snps[position/window_length] = 0 unless snps[position/window_length]
   snps[position/window_length] += 1
-  puts position
-  puts position/window_length
+  #puts position
+  #puts position/window_length
   #puts snps
-  STDIN.gets
+  #STDIN.gets
   #if position > 20000000
   #  puts target_info.join(":")
   #  puts tlf_info.join(":")
