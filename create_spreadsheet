@@ -103,6 +103,14 @@ def non_unique?(target_fields,array_of_control_fields)
   result
 end
 
+def get_base(control_fields,fields)
+  return "n/a" if control_fields[0] == "./."
+  bases = [fields[3],fields[4].split(",")].flatten
+  control_dis = control_fields[1].split(",").map {|ele| ele.to_i}
+  max_index = control_dis.index(control_dis.max)
+  bases[max_index]
+end
+
 
 ### Main ############################################################
 #####################################################################
@@ -132,7 +140,7 @@ sheet1 = book.create_worksheet
 sheet1.row(0).push '#CHROM','POS'
 sheet1.row(0).push 'TLF base', 'TLF GT','TLF AD','TLF GTQ'
 sheet1.row(0).push 'Wik base', 'Wik GT','Wik AD','Wik GTQ'
-sheet1.row(0).push "#{target_name[0]} base",'Effect', 'Codon Change', 'Gen Name','Phast Cons','Score'
+sheet1.row(0).push "#{target_name[0]} base",'Impact','Effect', 'Codon Change', 'Gen Name','Phast Cons','Score'
 sheet1.row(0).push "#{target_name[0]} GT","#{target_name[0]} AD", "#{target_name[0]} GTQ"
 sheet1.row(0).push 'Total AD Control'
 control_names.each do |control_name|
@@ -164,10 +172,31 @@ File.open(vcf_file).each do |line|
     array_of_control_fields << fields[num].split(":")
   end
   next if non_unique?(target_fields,array_of_control_fields)
-  link = make_link(line[0],line[1])
-  sheet1.row(i).push Spreadsheet::Link.new(link,line[0]), line[1]
-  
-  sheet1.row(i).push 
+  link = make_link(fields[1].to_i,fields[0])
+  sheet1.row(i).push Spreadsheet::Link.new(link,fields[0]), fields[1].to_i
+  tlf_base = get_base(tlf_fields,fields)
+  sheet1.row(i).push tlf_base, tlf_fields[0], tlf_fields[1], tlf_fields[3].to_i
+  wik_base = get_base(wik_fields,fields)
+  sheet1.row(i).push wik_base, wik_fields[0], wik_fields[1], wik_fields[3].to_i
+  target_base = get_base(target_fields,fields)
+  sheet1.row(i).push target_base
+  if line =~ /SNPEFF_IMPACT/
+    info = fields[7]
+    impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
+    gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
+    effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
+    snpeff_transcript_id = info.split("SNPEFF_TRANSCRIPT_ID=")[-1].split(";")[0]
+    if snpeff_transcript_id =~ /^ENS/
+      link_transcript_id = make_link_ensembl(snpeff_transcript_id)
+    else
+      link_transcript_id = make_link_refSeq(snpeff_transcript_id)
+    end
+    codon_change = "n/a"
+    codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0] if effect == "NON_SYNONYMOUS_CODING"
+    sheet1.row(i).push impact,effect,codon_change,Spreadsheet::Link.new(link_transcript_id,snpeff_transcript_id)
+  else
+    sheet1.row(i).push 'n/a','n/a','n/a','n/a'
+  end
 
   i = i+1
 end
