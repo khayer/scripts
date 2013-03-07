@@ -72,7 +72,7 @@ def get_names(vcf_file,numbers)
   File.open(vcf_file).each do |line|
     line.chomp!
     next if line =~ /^##/
-    break unless line =~ /^#/ 
+    break unless line =~ /^#/
     fields = line.split("\t")
     numbers.each do |num|
       names << fields[num]
@@ -99,7 +99,6 @@ def non_unique?(target_fields,array_of_control_fields)
       break
     end
   end
-
   result
 end
 
@@ -109,6 +108,46 @@ def get_base(control_fields,fields)
   control_dis = control_fields[1].split(",").map {|ele| ele.to_i}
   max_index = control_dis.index(control_dis.max)
   bases[max_index]
+end
+
+def get_phast_cons_score(phast_cons,chromosome,position)
+  all_matches = open(phast_cons) { |f| f.grep(/\s#{chromosome}\s/) }
+  result = "n/a"
+  all_matches.each do |match|
+    match.chomp!
+    fields = match.split("\t")
+    if position > fields[2].to_i && position < fields[3].to_i
+      result = fields[-1].to_i
+      break
+    end
+  end
+  result
+end
+
+def get_homozygosity_score(homo_score,position)
+  result = "n/a"
+  File.open(homo_score).each do |line|
+    line.chomp!
+    fields = line.split("\t")
+    if position < fields[0].to_i
+      result = fields[1].to_f
+      break
+    end
+  end
+  result
+end
+
+def get_total_allele_depth(target_fields,array_of_control_fields)
+  array_length = target_fields[1].split(",").length
+  allele_depth = Array.new(array_length,0)
+  array_of_control_fields.each do |control_fields|
+    next if control_fields[0] == "./."
+    control_dis = control_fields[1].split(",").map {|ele| ele.to_i}
+    control_dis.each_with_index do |num,i|
+      allele_depth[i] += num
+    end
+  end
+  allele_depth.join(",")
 end
 
 
@@ -186,6 +225,8 @@ File.open(vcf_file).each do |line|
     gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
     effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
     snpeff_transcript_id = info.split("SNPEFF_TRANSCRIPT_ID=")[-1].split(";")[0]
+    sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :green, :color => :white if impact=="HIGH"
+    sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :orange, :color => :white if impact=="MODERATE"
     if snpeff_transcript_id =~ /^ENS/
       link_transcript_id = make_link_ensembl(snpeff_transcript_id)
     else
@@ -196,6 +237,15 @@ File.open(vcf_file).each do |line|
     sheet1.row(i).push impact,effect,codon_change,Spreadsheet::Link.new(link_transcript_id,snpeff_transcript_id)
   else
     sheet1.row(i).push 'n/a','n/a','n/a','n/a'
+  end
+  phast_cons_score = get_phast_cons_score(phast_cons,fields[0],fields[1].to_i)
+  homozygosity_score = get_homozygosity_score(homo_score,fields[1].to_i)
+  sheet1.row(i).push phast_cons_score, homozygosity_score
+  sheet1.row(i).push target_fields[0],target_fields[1],target_fields[3].to_i
+  total_allele_depth = get_total_allele_depth(target_fields,array_of_control_fields)
+  sheet1.row(i).push total_allele_depth
+  array_of_control_fields.each do |control_fields|
+    sheet1.row(i).push control_fields[0],control_fields[1],control_fields[3].to_i
   end
 
   i = i+1
