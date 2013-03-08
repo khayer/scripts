@@ -92,7 +92,7 @@ def non_unique?(target_fields,array_of_control_fields)
   max_index = target_dis.index(target_dis.max)
   array_of_control_fields.each do |control_fields|
     next if control_fields[0] == "./."
-    next if control_fields[3].to_i < 20
+    next if control_fields[3].to_i < 10
     control_dis = control_fields[1].split(",").map {|ele| ele.to_i}
     unless control_dis[max_index] == 0 && control_fields[0] != target_fields[0]
       result = true
