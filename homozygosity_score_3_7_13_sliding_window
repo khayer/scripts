@@ -169,8 +169,6 @@ File.open(combined_vcf).each do |line|
   #  puts current_score
   #  STDIN.gets
   #end
-  puts sliding_window
-  STDIN.gets
   if sliding_window.length == snp_window
     average = sliding_window.inject{ |sum, el| sum + el }.to_f / sliding_window.size
     sliding_window.delete_at(0)
