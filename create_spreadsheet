@@ -176,7 +176,7 @@ control_names = get_names(vcf_file,control_numbers)
 
 book = Spreadsheet::Workbook.new
 sheet1 = book.create_worksheet
-sheet1.row(0).push '#CHROM','POS'
+sheet1.row(0).push '#CHROM','POS','Zv9 base'
 sheet1.row(0).push 'TLF base', 'TLF GT','TLF AD','TLF GTQ'
 sheet1.row(0).push 'Wik base', 'Wik GT','Wik AD','Wik GTQ'
 sheet1.row(0).push "#{target_name[0]} base",'Impact','Effect', 'Codon Change', 'Gen Name','Phast Cons','Score'
@@ -215,7 +215,7 @@ File.open(vcf_file).each do |line|
   end
   next if non_unique?(target_fields,array_of_control_fields)
   link = make_link(fields[1].to_i,fields[0])
-  sheet1.row(i).push Spreadsheet::Link.new(link,fields[0]), fields[1].to_i
+  sheet1.row(i).push Spreadsheet::Link.new(link,fields[0]), fields[1].to_i, fields[3]
   tlf_base = get_base(tlf_fields,fields)
   sheet1.row(i).push tlf_base, tlf_fields[0], tlf_fields[1], tlf_fields[3].to_i
   wik_base = get_base(wik_fields,fields)
