@@ -202,7 +202,7 @@ File.open(vcf_file).each do |line|
   fields = line.split("\t")
   next unless homozygous?(fields[target_number])
   target_fields = fields[target_number].split(":")
-  #next if target_fields[2].to_i < 10
+  next if target_fields[2].to_i < 5
   #next if target_fields[3].to_i < 30
   tlf_fields = fields[tlf_number].split(":")
   wik_fields = fields[wik_number].split(":")
