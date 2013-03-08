@@ -198,11 +198,12 @@ i = 1
 File.open(vcf_file).each do |line|
   line.chomp!
   next if !(line =~ /SNPEFF_IMPACT/)
+  next unless (line =~ /HIGH/ || line =~ /MODERATE/ || line =~ /LOW/)
   next if line =~ /^#/
   fields = line.split("\t")
   next unless homozygous?(fields[target_number])
   target_fields = fields[target_number].split(":")
-  next if target_fields[2].to_i < 8
+  next if target_fields[2].to_i < 4
   next if target_fields[0] == "0/0"
   #next if target_fields[3].to_i < 30
   tlf_fields = fields[tlf_number].split(":")
