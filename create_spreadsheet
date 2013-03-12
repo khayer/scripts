@@ -94,7 +94,8 @@ def non_unique?(target_fields,array_of_control_fields)
     next if control_fields[0] == "./."
     next if control_fields[3].to_i < 10
     control_dis = control_fields[1].split(",").map {|ele| ele.to_i}
-    unless control_dis[max_index] == 0 && control_fields[0] != target_fields[0]
+    #unless control_dis[max_index] == 0 && control_fields[0] != target_fields[0]
+    unless control_fields[0] != target_fields[0]
       result = true
       break
     end
@@ -150,6 +151,21 @@ def get_total_allele_depth(target_fields,array_of_control_fields)
   allele_depth.join(",")
 end
 
+def get_allele_frequency(array_of_control_fields,mutant_index)
+  allele_frequency = "n/a"
+  all_reads = 0
+  mutant_reads = 0
+  array_of_control_fields.each do |control_fields|
+    next if control_fields[0] == "./."
+    dis = control_fields[1].split(",").map {|ele| ele.to_i}
+    dis.each do |num|
+      all_reads += num
+    end
+    mutant_reads += dis[mutant_index]
+  end
+  allele_frequency = mutant_reads.to_f / all_reads.to_f if all_reads > 0
+  allele_frequency
+end
 
 ### Main ############################################################
 #####################################################################
@@ -181,7 +197,7 @@ sheet1.row(0).push 'TLF base', 'TLF GT','TLF AD','TLF GTQ'
 sheet1.row(0).push 'Wik base', 'Wik GT','Wik AD','Wik GTQ'
 sheet1.row(0).push "#{target_name[0]} base",'Impact','Effect', 'Codon Change', 'Gen Name','Phast Cons','Score'
 sheet1.row(0).push "#{target_name[0]} GT","#{target_name[0]} AD", "#{target_name[0]} GTQ"
-sheet1.row(0).push 'Total AD Control'
+sheet1.row(0).push 'Total AD Control', "#{target_name[0]} Allele Frequency", 'Controls Allele Frequency'
 control_names.each do |control_name|
   sheet1.row(0).push "#{control_name} GT", "#{control_name} AD", "#{control_name} GTQ"
 end
@@ -246,7 +262,10 @@ File.open(vcf_file).each do |line|
   sheet1.row(i).push phast_cons_score, homozygosity_score
   sheet1.row(i).push target_fields[0],target_fields[1],target_fields[3].to_i
   total_allele_depth = get_total_allele_depth(target_fields,array_of_control_fields)
-  sheet1.row(i).push total_allele_depth
+  mutant_index = target_fields[0].split(",")[0].to_i
+  target_allele_frequency = get_allele_frequency([target_fields],mutant_index)
+  all_allele_frequency = get_allele_frequency(array_of_control_fields,mutant_index)
+  sheet1.row(i).push total_allele_depth, target_allele_frequency, all_allele_frequency
   array_of_control_fields.each do |control_fields|
     sheet1.row(i).push control_fields[0],control_fields[1],control_fields[3].to_i
   end
