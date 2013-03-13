@@ -92,10 +92,10 @@ def non_unique?(target_fields,array_of_control_fields)
   max_index = target_dis.index(target_dis.max)
   array_of_control_fields.each do |control_fields|
     next if control_fields[0] == "./."
-    next if control_fields[3].to_i < 10
+    next if control_fields[3].to_i < 30
     control_dis = control_fields[1].split(",").map {|ele| ele.to_i}
     #unless control_dis[max_index] == 0 && control_fields[0] != target_fields[0]
-    unless control_fields[0] != target_fields[0]
+    if control_fields[0] == target_fields[0] || !homozygous?(control_fields[0])
       result = true
       break
     end
@@ -253,7 +253,7 @@ File.open(vcf_file).each do |line|
     end
     codon_change = "n/a"
     codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0] if effect == "NON_SYNONYMOUS_CODING"
-    sheet1.row(i).push impact,effect,codon_change,Spreadsheet::Link.new(link_transcript_id,snpeff_transcript_id)
+    sheet1.row(i).push impact,effect,codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name)
   else
     sheet1.row(i).push 'n/a','n/a','n/a','n/a'
   end
@@ -261,10 +261,14 @@ File.open(vcf_file).each do |line|
   homozygosity_score = get_homozygosity_score(homo_score,fields[1].to_i)
   sheet1.row(i).push phast_cons_score, homozygosity_score
   sheet1.row(i).push target_fields[0],target_fields[1],target_fields[3].to_i
-  total_allele_depth = get_total_allele_depth(target_fields,array_of_control_fields)
+  array_of_control_fields_with_strains = array_of_control_fields
+  array_of_control_fields_with_strains << tlf_fields
+  array_of_control_fields_with_strains << wik_fields
+  total_allele_depth = get_total_allele_depth(target_fields,array_of_control_fields_with_strains)
   mutant_index = target_fields[0].split(",")[0].to_i
   target_allele_frequency = get_allele_frequency([target_fields],mutant_index)
-  all_allele_frequency = get_allele_frequency(array_of_control_fields,mutant_index)
+  
+  all_allele_frequency = get_allele_frequency(array_of_control_fields_with_strains,mutant_index)
   sheet1.row(i).push total_allele_depth, target_allele_frequency, all_allele_frequency
   array_of_control_fields.each do |control_fields|
     sheet1.row(i).push control_fields[0],control_fields[1],control_fields[3].to_i
