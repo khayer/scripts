@@ -4,7 +4,7 @@ require 'csv'
 
 usage =<<EOF
 
-      #{$0} vcf xls target control tlf wik phast homo
+      #{$0} vcf xls target control tlf wik phast homo [sib]
 
       ------------------------------------------------------
       * vcf      :: vcf with all samples
@@ -15,6 +15,7 @@ usage =<<EOF
       * wik      :: number of wik
       * phast    :: phast cons score
       * homo     :: homozygosity score
+      * [sib]       :: number of sibling 
       ------------------------------------------------------
 
       - VERSION 3/5/2013 -----------------------------------
@@ -170,7 +171,7 @@ end
 ### Main ############################################################
 #####################################################################
 
-if ARGV.length != 8
+if ARGV.length < 8
   puts usage
   exit
 end
@@ -185,6 +186,8 @@ tlf_number = ARGV[4].to_i + 8
 wik_number = ARGV[5].to_i + 8
 phast_cons = ARGV[6]
 homo_score = ARGV[7]
+sib_number = ARGV[8].to_i + 8 if ARGV[8]
+
 #seg = ARGV[3]
 
 target_name = get_names(vcf_file,[target_number])
@@ -197,7 +200,12 @@ sheet1.row(0).push 'TLF base', 'TLF GT','TLF AD','TLF GTQ'
 sheet1.row(0).push 'Wik base', 'Wik GT','Wik AD','Wik GTQ'
 sheet1.row(0).push "#{target_name[0]} base",'Impact','Effect', 'Codon Change', 'Gen Name','Phast Cons','Score'
 sheet1.row(0).push "#{target_name[0]} GT","#{target_name[0]} AD", "#{target_name[0]} GTQ"
+if sib_number
+  sib_name = get_names(vcf_file,[sib_number])
+  sheet1.row(0).push "#{sib_name[0]} GT", "#{sib_name[0]} AD", "#{sib_name[0]} GTQ"
+end
 sheet1.row(0).push 'Total AD Control', "#{target_name[0]} Allele Frequency", 'Controls Allele Frequency'
+
 control_names.each do |control_name|
   sheet1.row(0).push "#{control_name} GT", "#{control_name} AD", "#{control_name} GTQ"
 end
@@ -261,6 +269,10 @@ File.open(vcf_file).each do |line|
   homozygosity_score = get_homozygosity_score(homo_score,fields[1].to_i)
   sheet1.row(i).push phast_cons_score, homozygosity_score
   sheet1.row(i).push target_fields[0],target_fields[1],target_fields[3].to_i
+  if sib_number
+    sib_fields = fields[sib_number].split(":")
+    sheet1.row(i).push sib_fields[0],sib_fields[1],sib_fields[3].to_i
+  end
   array_of_control_fields_with_strains = array_of_control_fields
   array_of_control_fields_with_strains << tlf_fields
   array_of_control_fields_with_strains << wik_fields
