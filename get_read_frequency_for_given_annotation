@@ -25,6 +25,7 @@ EOF
 def prepare_bed_file(bed_file)
   #[chr,low,high] => [Gene,strand,#of_reads]
   all_genes = Hash.new
+  all_exons = Hash.new
   File.open(bed_file).each do |line|
     line.chomp!
     fields = line.split("\t")
@@ -33,15 +34,16 @@ def prepare_bed_file(bed_file)
     chr = fields[2]
     gene = fields[1]
     strand = fields[3]
-    starts = fields[9]
-    stops = fields[10]
+    starts = fields[9].split(",")
+    stops = fields[10].split(",")
     length = 0
     starts.each_with_index do |start,i|
       length += stops[i].to_i - start.to_i
+      all_exons[[chr, start.to_i, stops[i].to_i]] = [fields[1], fields[12]]
     end
-    all_genes[[chr,low,high]] = [gene,strand,length,0]
+    all_genes[[gene,fields[12]]] = [chr,low,high,gene,strand,length,0]
   end
-  all_genes
+  [all_genes, all_exons]
 end
 
 ### Main ############################################################
@@ -57,5 +59,34 @@ end
 sam_file = ARGV[0]
 annotation_file = ARGV[1]
 
-all_genes = prepare_bed_file(annotation_file)
-puts all_genes[[chr1,62325,66662]]
+all_genes, all_exons = prepare_bed_file(annotation_file)
+#puts all_genes[["NM_001002485","mrps15"]]
+#puts all_exons[["Zv9_scaffold3564",130267,130740]]
+
+File.open(sam_file).each do |line|
+  line.chop!
+  next if line =~ /^@/
+  fields = line.split("\t")
+  chromosome = fields[2]
+  position = fields[3].to_i
+  all_exons.each_pair do |exon,gene_name|
+    #puts exon if exon[0] == chromosome
+    next unless exon[0] == chromosome
+    next unless exon[1] <= position
+    next unless exon[2] >= position
+    #puts "YEAH"
+    #exit
+    #all_genes[[gene,fields[12]]] = [chr,low,high,gene,strand,length,0]
+    all_genes[gene_name][-1] += 1
+  end
+
+
+
+  #exit
+end
+
+all_genes.each_pair do |gene,specs|
+  next if specs[-1] == 0
+  frequency = (specs[-1].to_f*100) / specs[-2].to_f
+  puts "#{gene.join("\t")}\t#{specs[0]}\t#{specs[1]}\t#{specs[2]}\t#{specs[4]}\t#{frequency}"
+end
