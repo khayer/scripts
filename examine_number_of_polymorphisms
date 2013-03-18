@@ -53,6 +53,8 @@ target_pos = ARGV[1].to_i + 8
 other_pos = ARGV[2].to_i + 8
 out_file = ARGV[3]
 window_length = 250000
+number_of_tlf = 0
+number_of_wik = 0
 
 #randy = Random.rand(100000)+1
 counter = 0
@@ -71,6 +73,8 @@ File.open(combined_vcf).each do |line|
 
   tlf_info = target_info.split(":")
   wik_info = other_info.split(":")
+  number_of_tlf += 1 if tlf_info[2].to_f >= 15.0
+  number_of_wik += 1 if wik_info[2].to_f >= 15.0
   next unless tlf_info[2].to_f >= 15.0 && wik_info[2].to_f >= 15.0
   #puts target_info
   #puts other_info
@@ -94,5 +98,6 @@ snps.each_with_index do |snp,i|
 end
 
 puts "#{chromosome}\t#{counter}"
-
+puts "#{chromosome}\tTLF (above 15):\t#{number_of_tlf}"
+puts "#{chromosome}\tWik (above 15):\t#{number_of_wik}"
 
