@@ -15,7 +15,7 @@ usage =<<EOF
       * wik      :: number of wik
       * phast    :: phast cons score
       * homo     :: homozygosity score
-      * [sib]       :: number of sibling 
+      * [sib]       :: number of sibling
       ------------------------------------------------------
 
       - VERSION 3/5/2013 -----------------------------------
@@ -222,7 +222,7 @@ i = 1
 File.open(vcf_file).each do |line|
   line.chomp!
   next if !(line =~ /SNPEFF_IMPACT/)
-  next unless (line =~ /HIGH/ || line =~ /MODERATE/ || line =~ /LOW/)
+  #next unless (line =~ /HIGH/ || line =~ /MODERATE/ || line =~ /LOW/)
   next if line =~ /^#/
   fields = line.split("\t")
   next unless homozygous?(fields[target_number])
@@ -279,7 +279,7 @@ File.open(vcf_file).each do |line|
   total_allele_depth = get_total_allele_depth(target_fields,array_of_control_fields_with_strains)
   mutant_index = target_fields[0].split(",")[0].to_i
   target_allele_frequency = get_allele_frequency([target_fields],mutant_index)
-  
+
   all_allele_frequency = get_allele_frequency(array_of_control_fields_with_strains,mutant_index)
   sheet1.row(i).push total_allele_depth, target_allele_frequency, all_allele_frequency
   array_of_control_fields.each do |control_fields|
