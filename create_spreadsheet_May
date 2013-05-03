@@ -232,7 +232,6 @@ i = 1
 #number_of_samples = sample_names.length()
 #location_first = "dummy"
 File.open(vcf_file).each do |line|
-  sheet1.row(i).delete
   line.chomp!
   next if !(line =~ /SNPEFF_IMPACT/)
   next unless (line =~ /HIGH/ || line =~ /MODERATE/ )
@@ -254,6 +253,13 @@ File.open(vcf_file).each do |line|
     array_of_control_fields << fields[num].split(":")
   end
   next if non_unique?(target_fields,array_of_control_fields)
+  array_of_control_fields_with_strains = array_of_control_fields
+  array_of_control_fields_with_strains << tlf_fields
+  array_of_control_fields_with_strains << wik_fields
+  mutant_index = target_fields[0].split(",")[0].to_i
+  all_allele_frequency = get_allele_frequency(array_of_control_fields_with_strains,mutant_index)
+  next if all_allele_frequency > 0.1
+
   link = make_link(fields[1].to_i,fields[0])
   sheet1.row(i).push Spreadsheet::Link.new(link,fields[0]), fields[1].to_i, fields[3]
   tlf_base = get_base(tlf_fields,fields)
@@ -301,9 +307,7 @@ File.open(vcf_file).each do |line|
   array_of_control_fields.each do |control_fields|
     sheet1.row(i).push control_fields[0],control_fields[1],control_fields[3].to_i
   end
-
-  i = i+1 unless all_allele_frequency > 0.1
-
+  i = i+1
 
 end
 #  next if !(line =~ /SNPEFF_IMPACT/)
