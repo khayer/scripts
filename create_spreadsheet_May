@@ -232,6 +232,7 @@ i = 1
 #number_of_samples = sample_names.length()
 #location_first = "dummy"
 File.open(vcf_file).each do |line|
+  sheet1.row(i).delete
   line.chomp!
   next if !(line =~ /SNPEFF_IMPACT/)
   next unless (line =~ /HIGH/ || line =~ /MODERATE/ )
@@ -243,7 +244,7 @@ File.open(vcf_file).each do |line|
   next if target_fields[0] == "0/0"
   target_read_dis = target_fields[1].split(",").map {|ele| ele.to_i }
   current_score = getScore(target_read_dis)
-  next if current_score < 0.65
+  next if current_score < 0.5
   next if target_fields[3].to_i < 5
   tlf_fields = fields[tlf_number].split(":")
   wik_fields = fields[wik_number].split(":")
@@ -301,7 +302,9 @@ File.open(vcf_file).each do |line|
     sheet1.row(i).push control_fields[0],control_fields[1],control_fields[3].to_i
   end
 
-  i = i+1
+  i = i+1 unless all_allele_frequency > 0.1
+
+
 end
 #  next if !(line =~ /SNPEFF_IMPACT/)
 #  line  = line.split("\t")
