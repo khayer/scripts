@@ -42,6 +42,11 @@ def snp_homo?(info)
   (info =~ /1\/1/) || (info =~ /2\/2/) || (info =~ /3\/3/) || (info =~ /0\/0/)
 end
 
+def snp_really_homo?(info)
+  read_depth = info.split(":")[1].split(",").map {|e| e.to_i}
+  read_depth.include?(0)
+end
+
 # _ Main _:
 if ARGV.length != 4
   puts usage
@@ -73,11 +78,12 @@ File.open(combined_vcf).each do |line|
 
   tlf_info = target_info.split(":")
   wik_info = other_info.split(":")
-  number_of_tlf += 1 if tlf_info[2].to_f >= 15.0
-  number_of_wik += 1 if wik_info[2].to_f >= 15.0
+  number_of_tlf += 1 if tlf_info[2].to_f >= 15.0 && snp_really_homo?(target_info)
+  number_of_wik += 1 if wik_info[2].to_f >= 15.0 && snp_really_homo?(other_info)
+  next unless snp_really_homo?(target_info) && snp_really_homo?(other_info)
   next unless tlf_info[2].to_f >= 15.0 && wik_info[2].to_f >= 15.0
-  #puts target_info
-  #puts other_info
+  #puts tlf_info.join(":")
+  #puts wik_info.join(":")
   #STDIN.gets
   counter += 1
   chromosome = line[0]
