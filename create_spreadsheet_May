@@ -234,10 +234,14 @@ i = 1
 File.open(vcf_file).each do |line|
   line.chomp!
   next if !(line =~ /SNPEFF_IMPACT/)
+  #puts "YES1"
   next unless (line =~ /HIGH/ || line =~ /MODERATE/ )
   next if line =~ /^#/
-  fields = line.split("\t")
-  next unless homozygous?(fields[target_number])
+  #puts "#{line}"
+  #puts "YES2"
+  #fields = line.split("\t")
+  fields = line.split(" ")
+  #next unless homozygous?(fields[target_number])
   target_fields = fields[target_number].split(":")
   next if target_fields[2].to_i < 4
   next if target_fields[0] == "0/0"
@@ -256,7 +260,9 @@ File.open(vcf_file).each do |line|
   array_of_control_fields_with_strains = array_of_control_fields
   array_of_control_fields_with_strains << tlf_fields
   array_of_control_fields_with_strains << wik_fields
-  mutant_index = target_fields[0].split(",")[0].to_i
+  #puts target_fields[0].split(",")
+  mutant_index = target_fields[0].split("/")[1].to_i
+  #puts mutant_index
   all_allele_frequency = get_allele_frequency(array_of_control_fields_with_strains,mutant_index)
   next if all_allele_frequency > 0.1
 
