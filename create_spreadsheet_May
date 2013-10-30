@@ -153,7 +153,7 @@ def get_total_allele_depth(target_fields,array_of_control_fields)
 end
 
 def get_allele_frequency(array_of_control_fields,mutant_index)
-  allele_frequency = "n/a"
+  allele_frequency = 0.0
   all_reads = 0
   mutant_reads = 0
   array_of_control_fields.each do |control_fields|
