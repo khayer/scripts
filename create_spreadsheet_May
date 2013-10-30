@@ -217,7 +217,7 @@ if sib_number
   sheet1.row(0).push "#{sib_name[0]} GT", "#{sib_name[0]} AD", "#{sib_name[0]} GTQ"
 end
 sheet1.row(0).push 'Total AD Control', "#{target_name[0]} Allele Frequency", 'Controls Allele Frequency'
-puts control_names
+#puts control_names
 control_names.each do |control_name|
   sheet1.row(0).push "#{control_name} GT", "#{control_name} AD", "#{control_name} GTQ"
 end
