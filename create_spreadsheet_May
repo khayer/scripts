@@ -217,7 +217,7 @@ if sib_number
   sheet1.row(0).push "#{sib_name[0]} GT", "#{sib_name[0]} AD", "#{sib_name[0]} GTQ"
 end
 sheet1.row(0).push 'Total AD Control', "#{target_name[0]} Allele Frequency", 'Controls Allele Frequency'
-
+puts control_names
 control_names.each do |control_name|
   sheet1.row(0).push "#{control_name} GT", "#{control_name} AD", "#{control_name} GTQ"
 end
@@ -257,7 +257,7 @@ File.open(vcf_file).each do |line|
     array_of_control_fields << fields[num].split(":")
   end
   next if non_unique?(target_fields,array_of_control_fields)
-  array_of_control_fields_with_strains = array_of_control_fields
+  array_of_control_fields_with_strains = array_of_control_fields.dup
   array_of_control_fields_with_strains << tlf_fields
   array_of_control_fields_with_strains << wik_fields
   #puts target_fields[0].split(",")
@@ -301,11 +301,11 @@ File.open(vcf_file).each do |line|
     sib_fields = fields[sib_number].split(":")
     sheet1.row(i).push sib_fields[0],sib_fields[1],sib_fields[3].to_i
   end
-  array_of_control_fields_with_strains = array_of_control_fields
+  array_of_control_fields_with_strains = array_of_control_fields.dup
   array_of_control_fields_with_strains << tlf_fields
   array_of_control_fields_with_strains << wik_fields
   total_allele_depth = get_total_allele_depth(target_fields,array_of_control_fields_with_strains)
-  mutant_index = target_fields[0].split(",")[0].to_i
+  mutant_index = target_fields[0].split("/")[1].to_i
   target_allele_frequency = get_allele_frequency([target_fields],mutant_index)
 
   all_allele_frequency = get_allele_frequency(array_of_control_fields_with_strains,mutant_index)
