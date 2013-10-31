@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'spreadsheet'
 require 'csv'
+require 'bio'
 
 usage =<<EOF
 
@@ -210,7 +211,7 @@ sheet1 = book.create_worksheet
 sheet1.row(0).push '#CHROM','POS','Zv9 base'
 sheet1.row(0).push 'TLF base', 'TLF GT','TLF AD','TLF GTQ'
 sheet1.row(0).push 'Wik base', 'Wik GT','Wik AD','Wik GTQ'
-sheet1.row(0).push "#{target_name[0]} base",'Impact','Effect', 'Codon Change', 'Gen Name','Phast Cons','Score'
+sheet1.row(0).push "#{target_name[0]} base",'Impact','Effect', 'Codon Change','Amino Change', 'Gen Name','Phast Cons','Score'
 sheet1.row(0).push "#{target_name[0]} GT","#{target_name[0]} AD", "#{target_name[0]} GTQ"
 if sib_number
   sib_name = get_names(vcf_file,[sib_number])
@@ -288,8 +289,17 @@ File.open(vcf_file).each do |line|
       link_transcript_id = make_link_refSeq(snpeff_transcript_id)
     end
     codon_change = "n/a"
-    codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0] if effect == "NON_SYNONYMOUS_CODING"
-    sheet1.row(i).push impact,effect,codon_change,Spreadsheet::Link.new(link_transcript_id,gene_name)
+    amino_change = "n/a"
+    if effect == "NON_SYNONYMOUS_CODING"
+      codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0]
+      codons = codon_change.split("/")
+      amino_change = []
+      codons.each do |code|
+        amino_change << Bio::Sequence::NA.new(code).translate
+      end
+      amino_change = amino_change.join("/")
+    end
+    sheet1.row(i).push impact,effect,codon_change,amino_change,Spreadsheet::Link.new(link_transcript_id,gene_name)
   else
     sheet1.row(i).push 'n/a','n/a','n/a','n/a'
   end
