@@ -234,7 +234,7 @@ i = 1
 #location_first = "dummy"
 File.open(vcf_file).each do |line|
   line.chomp!
-  next if !(line =~ /SNPEFF_IMPACT/)
+  next if !(line =~ /EFF/)
   #puts "YES1"
   next unless (line =~ /HIGH/ || line =~ /MODERATE/ )
   next if line =~ /^#/
