@@ -282,6 +282,7 @@ File.open(vcf_file).each do |line|
     #Amino_Acid_length | Gene_Name | Transcript_BioType | Gene_Coding | Transcript_ID
     #| Exon_Rank  | Genotype_Number [ | ERRORS | WARNINGS ] )' ">
     info = fields[7]
+    puts info
     snp_eff = info.split("EFF=")[1].split(",")
     snp_eff.keep_if {|k| k =~ /(HIGH,MODERATE)/}
     puts snp_eff
