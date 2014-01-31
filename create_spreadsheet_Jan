@@ -234,7 +234,7 @@ i = 1
 #location_first = "dummy"
 File.open(vcf_file).each do |line|
   line.chomp!
-  next if !(line =~ /SNPEFF_IMPACT/)
+  next if !(line =~ /EFF/)
   #puts "YES1"
   next unless (line =~ /HIGH/ || line =~ /MODERATE/ )
   next if line =~ /^#/
@@ -275,12 +275,20 @@ File.open(vcf_file).each do |line|
   sheet1.row(i).push wik_base, wik_fields[0], wik_fields[1], wik_fields[3].to_i
   target_base = get_base(target_fields,fields)
   sheet1.row(i).push target_base
-  if line =~ /SNPEFF_IMPACT/
+  if line =~ /EFF/
+    ###INFO=<ID=EFF,Number=.,Type=String,
+    #Description="Predicted effects for this variant.Format:
+    #'Effect ( Effect_Impact | Functional_Class | Codon_Change | Amino_Acid_Change|
+    #Amino_Acid_length | Gene_Name | Transcript_BioType | Gene_Coding | Transcript_ID
+    #| Exon_Rank  | Genotype_Number [ | ERRORS | WARNINGS ] )' ">
     info = fields[7]
-    impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
-    gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
-    effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
-    snpeff_transcript_id = info.split("SNPEFF_TRANSCRIPT_ID=")[-1].split(";")[0]
+    snp_eff = info.split("EFF=")[1].split(",")
+    snp_eff.keep_if {|k| k =~ /(HIGH,MODERATE)/}
+    effect,impact,functional_class,codon_change,aa_change,aa_length,gene_name,transcript_bio_type,gene_coding,snpeff_transcript_id,exon_rank,genotype_number= snp_eff[0].split(/[|()]/)
+    #impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
+    #gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
+    #effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
+    #snpeff_transcript_id = info.split("SNPEFF_TRANSCRIPT_ID=")[-1].split(";")[0]
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :green, :color => :white if impact=="HIGH"
     sheet1.row(i).default_format = Spreadsheet::Format.new :pattern => 1 ,:pattern_fg_color => :orange, :color => :white if impact=="MODERATE"
     if snpeff_transcript_id =~ /^ENS/
@@ -291,7 +299,7 @@ File.open(vcf_file).each do |line|
     codon_change = "n/a"
     amino_change = "n/a"
     if effect == "NON_SYNONYMOUS_CODING"
-      codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0]
+      #codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0]
       codons = codon_change.split("/")
       amino_change = []
       codons.each do |code|
