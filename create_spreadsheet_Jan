@@ -284,7 +284,7 @@ File.open(vcf_file).each do |line|
     info = fields[7]
     puts info
     snp_eff = info.split("EFF=")[1].split(",")
-    snp_eff.keep_if {|k| k =~ /(HIGH,MODERATE)/}
+    snp_eff.keep_if {|k| k =~ /(HIGH|MODERATE)/}
     puts snp_eff
     effect,impact,functional_class,codon_change,aa_change,aa_length,gene_name,transcript_bio_type,gene_coding,snpeff_transcript_id,exon_rank,genotype_number= snp_eff[0].split(/[|()]/)
     #impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
