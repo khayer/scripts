@@ -91,7 +91,7 @@ def run(argv)
         # 0/1:8,9:17:99:218,0,184
         next if fields[sample_number] =~ /\.\/\./
         sample_info = fields[sample_number].split(":")
-        next if sample_info[2].to_i < options[:cut_off] && sample_info[0] =~ /1\/1/
+        next if sample_info[2].to_i < options[:cut_off] || !(sample_info[0] =~ /1\/1/)
         count += 1
       end
     end
