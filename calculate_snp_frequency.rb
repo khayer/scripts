@@ -74,11 +74,13 @@ def run(argv)
   in_vcf.each do |line|
     line.chomp!
     if line =~ /^##/
-      # ##contig=<ID=gi|472278118|gb|KB708475.1|,length=199378>
-      length = line.split("length=")[1].to_i
-      contig_name = line.split("ID=")[1].split(",")[0]
-      contigs[contig_name] = length
-      total_number_of_bases += length
+      if line =~ /^##contig=/
+        # ##contig=<ID=gi|472278118|gb|KB708475.1|,length=199378>
+        length = line.split("length=")[1].to_i
+        contig_name = line.split("ID=")[1].split(",")[0]
+        contigs[contig_name] = length
+        total_number_of_bases += length
+      end
     else
       if line =~ /^#/
         fields = line.split("\t")
