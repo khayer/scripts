@@ -65,7 +65,6 @@ def run(argv)
   in_vcf = File.open(ARGV[0])
   sample_name = ARGV[1]
 
-  counter = 0
   contigs = Hash.new
   sample_number = nil
   count = 0
@@ -91,13 +90,14 @@ def run(argv)
         # 0/1:8,9:17:99:218,0,184
         next if fields[sample_number] =~ /\.\/\./
         sample_info = fields[sample_number].split(":")
-        next if sample_info[2].to_i < options[:cut_off] || !(sample_info[0] =~ /1\/1/)
+        next if sample_info[2].to_i < options[:cut_off]
+        next unless sample_info[0] =~ /1\/1/
         count += 1
       end
     end
   end
-  puts "SNP frequency #{counter} SNP's per #{total_number_of_bases} number of bases"
-  puts "SNP frequency #{counter/total_number_of_bases*100000} per 100,000 bases"
+  puts "SNP frequency #{count} SNP's per #{total_number_of_bases} number of bases"
+  puts "SNP frequency #{count/total_number_of_bases*100000} per 100,000 bases"
 end
 
 if __FILE__ == $0
