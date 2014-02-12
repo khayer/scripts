@@ -97,7 +97,7 @@ def run(argv)
     end
   end
   puts "SNP frequency #{count} SNP's per #{total_number_of_bases} number of bases"
-  puts "SNP frequency #{count/total_number_of_bases*100000} per 100,000 bases"
+  puts "SNP frequency #{count.to_f/total_number_of_bases.to_f*100000} per 100,000 bases"
 end
 
 if __FILE__ == $0
