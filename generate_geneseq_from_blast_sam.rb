@@ -81,6 +81,12 @@ def read_blast(blast)
     tends << tend.to_i
 
   end
+   gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
+   gene_ranges[last_tname] << [tstarts.min,tends.max,current_query]
+
+  gene_ranges.each_pair do |contig, ranges|
+    gene_ranges[contig] = ranges.sort
+  end
 
   gene_ranges
 end
@@ -97,6 +103,8 @@ def run(argv)
 
   gene_ranges = read_blast(blast)
   contigs = Hash.new
+  reads = Hash.new
+  current_range = nil
 
   File.open(sam_file).each do |line|
     line.chomp!
@@ -108,6 +116,20 @@ def run(argv)
     unless line =~ /^@/
       # FCH8JMRADXX:2:1214:6191:40267#CGCTCATT  1123  gi|472278466|gb|KB708127.1| 58193489  60  100M  = 58193525  136 CATAAGTATTAATCTATGTATTTCCACGTGGAGAATGCTTCAGTGTCCTATATTCCCAACCACTACATGGCATCTTCTCTGGTGGCTTCTCTTTGCCTTC  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       name, bit_flag, tname, tstart, qual, cigar, d,d,d,seq = line.split("\t")
+
+      current_range = gene_ranges[tname][0] unless current_range
+
+      bit_flag = bit_flag.to_i.to_s(2).split("")
+      reads[name] = ["",""] unless reads[name]
+      if bit_flag[-6] == "1"
+         reads[name][0] = seq
+      elsif bit_flag[-7] == "1"
+        reads[name][1] = seq
+      else
+        raise("READ NOT FIRST OR LAST IN PAIR?")
+      end
+
+      else
     end
 
 
