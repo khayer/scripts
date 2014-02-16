@@ -93,6 +93,8 @@ end
 
 def process_reads(reads, current_range,contigs)
 
+end
+
 def run(argv)
   options = setup_options(argv)
   setup_logger(options[:log_level])
