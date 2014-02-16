@@ -91,6 +91,8 @@ def read_blast(blast)
   gene_ranges
 end
 
+def process_reads(reads, current_range,contigs)
+
 def run(argv)
   options = setup_options(argv)
   setup_logger(options[:log_level])
@@ -118,18 +120,24 @@ def run(argv)
       name, bit_flag, tname, tstart, qual, cigar, d,d,d,seq = line.split("\t")
 
       current_range = gene_ranges[tname][0] unless current_range
+      next if tstart.to_i < current_range[0]
+      if tstart.to_i < current_range[1]
 
-      bit_flag = bit_flag.to_i.to_s(2).split("")
-      reads[name] = ["",""] unless reads[name]
-      if bit_flag[-6] == "1"
-         reads[name][0] = seq
-      elsif bit_flag[-7] == "1"
-        reads[name][1] = seq
+        bit_flag = bit_flag.to_i.to_s(2).split("")
+        reads[name] = ["",""] unless reads[name]
+        if bit_flag[-6] == "1"
+           reads[name][0] = seq
+        elsif bit_flag[-7] == "1"
+          reads[name][1] = seq
+        else
+          raise("READ NOT FIRST OR LAST IN PAIR?")
+        end
+
       else
-        raise("READ NOT FIRST OR LAST IN PAIR?")
+        process_reads(reads, current_range,contigs)
+        current_range =  gene_ranges[tname][0]
+        reads = Hash.new
       end
-
-      else
     end
 
 
