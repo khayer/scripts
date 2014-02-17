@@ -206,8 +206,8 @@ def run(argv)
         i += 1
 
         current_range =  gene_ranges[tname][i]
-        $logger.info("current range: #{current_range}; i = #{i}") if current_query
-        $logger.info("reads length: #{reads.length}") if current_query
+        $logger.info("current range: #{current_range}; i = #{i}") if current_range
+        $logger.info("reads length: #{reads.length}") if current_range
         reads = Hash.new
       end
     end
