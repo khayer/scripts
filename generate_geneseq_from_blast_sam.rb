@@ -168,17 +168,20 @@ def run(argv)
 
         last_tname = tname
         unless reads.empty?
+          $logger.info("current range: #{current_range}")
+          $logger.info("reads length: #{reads.length}")
           process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
         end
         current_range = gene_ranges[tname][0]
         i = 0
+        $logger.info("current range: #{current_range}")
+        $logger.info("reads length: #{reads.length}")
         reads = Hash.new
 
 
       end
       current_range = gene_ranges[tname][0] unless current_range
-      $logger.info("current range: #{current_range}")
-      $logger.info("reads length: #{reads.length}")
+
       next if tstart.to_i < current_range[0]
       if tstart.to_i < current_range[1]
 
@@ -195,10 +198,15 @@ def run(argv)
 
       else
         if reads != {}
+          $logger.info("PROCESS:: current range: #{current_range}")
+          $logger.info("PROCESS:: reads length: #{reads.length}")
           process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
         end
         i += 1
+
         current_range =  gene_ranges[tname][i]
+        $logger.info("current range: #{current_range}; i = #{i}")
+        $logger.info("reads length: #{reads.length}")
         reads = Hash.new
       end
     end
