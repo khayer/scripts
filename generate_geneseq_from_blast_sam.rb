@@ -97,6 +97,7 @@ def run_trinity(fwd,rev,path_to_trinity)
   #~/Tools/trinityrnaseq_r2012-10-05/Trinity.pl --CPU 8 --seqType fa --JM 110G --output trinity/ --left fwd.fa --right rev.fa
   cmd = "#{path_to_trinity}/Trinity.pl --seqType fa --JM 10G --output trinity/ --left #{fwd} --right #{rev}"
   $logger.info(cmd)
+  exit
   k = `#{cmd}`
   # util/alignReads.pl --left fwd.fa --right rev.fa --seqType fa --target trinity/Trinity.fasta --aligner bowtie
   #cmd = "#{path_to_trinity}/util/alignReads.pl --left #{fwd} --right #{rev} --seqType fa --target trinity/Trinity.fasta --aligner bowtie"
@@ -118,9 +119,9 @@ def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
   rev_tmp = File.open("rev_tmp.fa", "w")
   reads.each_pair do |reads_name,sequences|
     if sequences[0] != "" && sequences[1] != ""
-      fwd_tmp.puts ">#{reads_name}"
+      fwd_tmp.puts ">#{reads_name}/1"
       fwd_tmp.puts sequences[0]
-      rev_tmp.puts ">#{reads_name}"
+      rev_tmp.puts ">#{reads_name}/2"
       rev_tmp.puts sequences[1]
     end
   end
@@ -135,6 +136,20 @@ def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
     outfile_handle.puts line
   end
   `rm high_quality.fasta`
+end
+
+def seq = cut_seq(seq,cigar)
+  cigar_letters = cigar.split(/\d/).keep_if {|e| e != ""}
+  cigar_numbers = cigar.split(/\D/).map {|e| e.to_i}
+  new_seq = ""
+  cigar_letters.each_with_index do |letter, i|
+    if letter == "M"
+      new_seq = seq[0..cigar_numbers[i]]
+    else
+      seq = seq[0..cigar_numbers[i]]
+    end
+  end
+  new_seq
 end
 
 def run(argv)
@@ -188,6 +203,8 @@ def run(argv)
 
         bit_flag = bit_flag.to_i.to_s(2).split("")
         reads[name] = ["",""] unless reads[name]
+
+        seq = cut_seq(seq,cigar)
         if bit_flag[-7] == "1"
            reads[name][0] = seq
         elsif bit_flag[-8] == "1"
