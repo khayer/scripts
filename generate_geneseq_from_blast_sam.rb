@@ -97,7 +97,6 @@ def run_trinity(fwd,rev,path_to_trinity)
   #~/Tools/trinityrnaseq_r2012-10-05/Trinity.pl --CPU 8 --seqType fa --JM 110G --output trinity/ --left fwd.fa --right rev.fa
   cmd = "#{path_to_trinity}/Trinity.pl --seqType fa --JM 10G --output trinity/ --left #{fwd} --right #{rev}"
   $logger.info(cmd)
-  exit
   k = `#{cmd}`
   # util/alignReads.pl --left fwd.fa --right rev.fa --seqType fa --target trinity/Trinity.fasta --aligner bowtie
   #cmd = "#{path_to_trinity}/util/alignReads.pl --left #{fwd} --right #{rev} --seqType fa --target trinity/Trinity.fasta --aligner bowtie"
