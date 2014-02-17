@@ -99,11 +99,11 @@ def run_trinity(fwd,rev,path_to_trinity)
   $logger.info(cmd)
   k = `#{cmd}`
   # util/alignReads.pl --left fwd.fa --right rev.fa --seqType fa --target trinity/Trinity.fasta --aligner bowtie
-  cmd = "#{path_to_trinity}/util/alignReads.pl --left #{fwd} --right #{rev} --seqType fa --target trinity/Trinity.fasta --aligner bowtie"
-  $logger.info(cmd)
-  k = `#{cmd}`
+  #cmd = "#{path_to_trinity}/util/alignReads.pl --left #{fwd} --right #{rev} --seqType fa --target trinity/Trinity.fasta --aligner bowtie"
+  #$logger.info(cmd)
+  #k = `#{cmd}`
   # util/RSEM_util/run_RSEM.pl --transcript trinity/Trinity.fasta --name_sorted_bam bowtie_out/bowtie_out.nameSorted.PropMapPairsForRSEM.bam --paired
-  cmd = "#{path_to_trinity}/util/RSEM_util/run_RSEM.pl --transcript trinity/Trinity.fasta --name_sorted_bam bowtie_out/bowtie_out.nameSorted.PropMapPairsForRSEM.bam --paired"
+  cmd = "#{path_to_trinity}/util/RSEM_util/run_RSEM_align_n_estimate.pl  --transcripts trinity/Trinity.fasta --seqType fa  --left #{fwd} --right #{rev} -- --no-bam-output"
   $logger.info(cmd)
   k = `#{cmd}`
   cmd = "grep -w \"100.00\" RSEM.isoforms.results | cut -f 1 | xargs samtools faidx trinity/Trinity.fasta > high_quality.fasta"
