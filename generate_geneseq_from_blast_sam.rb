@@ -173,6 +173,7 @@ def run(argv)
         elsif bit_flag[-7] == "1"
           reads[name][1] = seq
         else
+          logger.error(line)
           raise("READ NOT FIRST OR LAST IN PAIR?")
         end
 
