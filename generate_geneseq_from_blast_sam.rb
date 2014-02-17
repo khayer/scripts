@@ -175,6 +175,8 @@ def run(argv)
 
       end
       current_range = gene_ranges[tname][0] unless current_range
+      $logger.info("current range: #{current_range}")
+      $logger.info("reads length: #{reads.length}")
       next if tstart.to_i < current_range[0]
       if tstart.to_i < current_range[1]
 
