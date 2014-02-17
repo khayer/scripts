@@ -149,8 +149,9 @@ def run(argv)
   gene_ranges = read_blast(blast)
   contigs = Hash.new
   reads = Hash.new
+  i = 0
   current_range = nil
-
+  last_tname
   File.open(sam_file).each do |line|
     line.chomp!
     if line =~ /^@SQ/
@@ -161,7 +162,18 @@ def run(argv)
     unless line =~ /^@/
       # FCH8JMRADXX:2:1214:6191:40267#CGCTCATT  1123  gi|472278466|gb|KB708127.1| 58193489  60  100M  = 58193525  136 CATAAGTATTAATCTATGTATTTCCACGTGGAGAATGCTTCAGTGTCCTATATTCCCAACCACTACATGGCATCTTCTCTGGTGGCTTCTCTTTGCCTTC  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       name, bit_flag, tname, tstart, qual, cigar, d,d,d,seq = line.split("\t")
+      if tname != last_tname
+        
+        last_tname = tname
+        if reads != {}
+          process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
+          STDIN.gets
+          current_range = gene_ranges[tname][0]
+          i = 0
+          reads = Hash.new
+        end
 
+      end
       current_range = gene_ranges[tname][0] unless current_range
       next if tstart.to_i < current_range[0]
       if tstart.to_i < current_range[1]
@@ -180,7 +192,8 @@ def run(argv)
       else
         process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
         STDIN.gets
-        current_range =  gene_ranges[tname][0]
+        i += 1
+        current_range =  gene_ranges[tname][i]
         reads = Hash.new
       end
     end
