@@ -94,7 +94,7 @@ def read_blast(blast)
 end
 
 def run_trinity(fwd,rev,path_to_trinity)
-  #~/Tools/trinityrnaseq_r2012-10-05/Trinity.pl --CPU 8 --seqType fa --JM 110G --output trinity/ --left fwd.fa --right rev.fa 
+  #~/Tools/trinityrnaseq_r2012-10-05/Trinity.pl --CPU 8 --seqType fa --JM 110G --output trinity/ --left fwd.fa --right rev.fa
   cmd = "#{path_to_trinity}/Trinity.pl --seqType fa --JM 10G --output trinity/ --left #{fwd} --right #{rev}"
   $logger.info(cmd)
   k = `#{cmd}`
@@ -165,15 +165,15 @@ def run(argv)
       # FCH8JMRADXX:2:1214:6191:40267#CGCTCATT  1123  gi|472278466|gb|KB708127.1| 58193489  60  100M  = 58193525  136 CATAAGTATTAATCTATGTATTTCCACGTGGAGAATGCTTCAGTGTCCTATATTCCCAACCACTACATGGCATCTTCTCTGGTGGCTTCTCTTTGCCTTC  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       name, bit_flag, tname, tstart, qual, cigar, d,d,d,seq = line.split("\t")
       if tname != last_tname
-        
+
         last_tname = tname
-        if reads != {}
+        unless reads.empty?
           process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
-          STDIN.gets
-          current_range = gene_ranges[tname][0]
-          i = 0
-          reads = Hash.new
         end
+        current_range = gene_ranges[tname][0]
+        i = 0
+        reads = Hash.new
+
 
       end
       current_range = gene_ranges[tname][0] unless current_range
@@ -194,8 +194,9 @@ def run(argv)
         end
 
       else
-        process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
-        STDIN.gets
+        if reads != {}
+          process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
+        end
         i += 1
         current_range =  gene_ranges[tname][i]
         reads = Hash.new
