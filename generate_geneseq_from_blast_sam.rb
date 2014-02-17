@@ -131,7 +131,7 @@ def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
 
   File.open(out_trinity).each do |line|
     line.chomp!
-    line = "line#{current_range[-1]}" if line =~ /^>/
+    line = "#{line}#{current_range[-1]}" if line =~ /^>/
     outfile_handle.puts line
   end
   `rm high_quality.fasta`
@@ -164,6 +164,7 @@ def run(argv)
     unless line =~ /^@/
       # FCH8JMRADXX:2:1214:6191:40267#CGCTCATT  1123  gi|472278466|gb|KB708127.1| 58193489  60  100M  = 58193525  136 CATAAGTATTAATCTATGTATTTCCACGTGGAGAATGCTTCAGTGTCCTATATTCCCAACCACTACATGGCATCTTCTCTGGTGGCTTCTCTTTGCCTTC  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       name, bit_flag, tname, tstart, qual, cigar, d,d,d,seq = line.split("\t")
+      next unless gene_ranges.keys.include?(tname)
       if tname != last_tname
 
         last_tname = tname
@@ -205,16 +206,13 @@ def run(argv)
         i += 1
 
         current_range =  gene_ranges[tname][i]
-        $logger.info("current range: #{current_range}; i = #{i}")
-        $logger.info("reads length: #{reads.length}")
+        $logger.info("current range: #{current_range}; i = #{i}") if current_query
+        $logger.info("reads length: #{reads.length}") if current_query
         reads = Hash.new
       end
     end
   end
-
   outfile_handle.close
-
-
 end
 
 if __FILE__ == $0
