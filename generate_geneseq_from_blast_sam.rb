@@ -25,7 +25,7 @@ def setup_options(args)
   options = {:cut_off =>  5, :log_level => "info"}
 
   opt_parser = OptionParser.new do |opts|
-    opts.banner = "Usage: #{$0} [options] blast samfile outfile.fa"
+    opts.banner = "Usage: #{$0} [options] blast samfile outfile.fa path_to_trinity"
     #opts.banner = "Usage: compare_fpkm_values [options] fpkm_values.txt"
     opts.separator ""
     opts.separator "Sam file must be sorted!"
@@ -93,7 +93,26 @@ def read_blast(blast)
   gene_ranges
 end
 
-def process_reads(reads, current_range,contigs,outfile_handle)
+def run_trinity(fwd,rev,path_to_trinity)
+  #~/Tools/trinityrnaseq_r2012-10-05/Trinity.pl --CPU 8 --seqType fa --JM 110G --output trinity/ --left fwd.fa --right rev.fa 
+  cmd = "#{path_to_trinity}/Trinity.pl --seqType fa --JM 10G --output trinity/ --left #{fwd} --right #{rev}"
+  $logger.info(cmd)
+  k = `#{cmd}`
+  # util/alignReads.pl --left fwd.fa --right rev.fa --seqType fa --target trinity/Trinity.fasta --aligner bowtie
+  cmd = "#{path_to_trinity}/util/alignReads.pl --left #{fwd} --right #{rev} --seqType fa --target trinity/Trinity.fasta --aligner bowtie"
+  $logger.info(cmd)
+  k = `#{cmd}`
+  # util/RSEM_util/run_RSEM.pl --transcript trinity/Trinity.fasta --name_sorted_bam bowtie_out/bowtie_out.nameSorted.PropMapPairsForRSEM.bam --paired
+  cmd = "#{path_to_trinity}/util/RSEM_util/run_RSEM.pl --transcript trinity/Trinity.fasta --name_sorted_bam bowtie_out/bowtie_out.nameSorted.PropMapPairsForRSEM.bam --paired"
+  $logger.info(cmd)
+  k = `#{cmd}`
+  cmd = "grep -w \"100.00\" RSEM.isoforms.results | cut -f 1 | xargs samtools faidx trinity/Trinity.fasta > high_quality.fasta"
+  $logger.info(cmd)
+  k = `#{cmd}`
+  "high_quality.fasta"
+end
+
+def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
   fwd_tmp = File.open("fwd_tmp.fa", "w")
   rev_tmp = File.open("rev_tmp.fa", "w")
   reads.each_pair do |reads_name,sequences|
@@ -107,11 +126,11 @@ def process_reads(reads, current_range,contigs,outfile_handle)
   fwd_tmp.close
   rev_tmp.close
 
-  out_trinity = run_trinity("fwd_tmp.fa","rev_tmp.fa")
+  out_trinity = run_trinity("fwd_tmp.fa","rev_tmp.fa",path_to_trinity)
 
   File.open(out_trinity).each do |line|
     line.chomp!
-    line = "line#{current_range[-1]}" if line =~ \^>\
+    line = "line#{current_range[-1]}" if line =~ /^>/
     outfile_handle.puts line
   end
 end
@@ -124,9 +143,8 @@ def run(argv)
 
   blast = ARGV[0]
   sam_file = ARGV[1]
-  outfile = File.open(ARGV[2],'w')
-
-  outfile_handle = File.open(outfile,'w')
+  outfile_handle = File.open(ARGV[2],'w')
+  path_to_trinity = ARGV[3]
 
   gene_ranges = read_blast(blast)
   contigs = Hash.new
@@ -159,13 +177,15 @@ def run(argv)
         end
 
       else
-        process_reads(reads, current_range,contigs,outfile_handle)
+        process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
+        STDIN.gets
         current_range =  gene_ranges[tname][0]
         reads = Hash.new
       end
     end
+  end
 
-    outfile_handle.close
+  outfile_handle.close
 
 
 end
