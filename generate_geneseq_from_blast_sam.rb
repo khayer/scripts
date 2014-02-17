@@ -118,7 +118,7 @@ def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
   fwd_tmp = File.open("fwd_tmp.fa", "w")
   rev_tmp = File.open("rev_tmp.fa", "w")
   reads.each_pair do |reads_name,sequences|
-    if sequences[0] != "" && sequences[1] != ""
+    if sequences[0].length > 50 && sequences[1].length > 50
       fwd_tmp.puts ">#{reads_name}/1"
       fwd_tmp.puts sequences[0]
       rev_tmp.puts ">#{reads_name}/2"
