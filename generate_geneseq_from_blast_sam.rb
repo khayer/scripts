@@ -138,7 +138,7 @@ def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
   `rm high_quality.fasta`
 end
 
-def seq = cut_seq(seq,cigar)
+def cut_seq(seq,cigar)
   cigar_letters = cigar.split(/\d/).keep_if {|e| e != ""}
   cigar_numbers = cigar.split(/\D/).map {|e| e.to_i}
   new_seq = ""
