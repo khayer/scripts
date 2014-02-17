@@ -151,7 +151,7 @@ def run(argv)
   reads = Hash.new
   i = 0
   current_range = nil
-  last_tname
+  last_tname = ""
   File.open(sam_file).each do |line|
     line.chomp!
     if line =~ /^@SQ/
