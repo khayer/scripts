@@ -168,9 +168,9 @@ def run(argv)
 
         bit_flag = bit_flag.to_i.to_s(2).split("")
         reads[name] = ["",""] unless reads[name]
-        if bit_flag[-6] == "1"
+        if bit_flag[-7] == "1"
            reads[name][0] = seq
-        elsif bit_flag[-7] == "1"
+        elsif bit_flag[-8] == "1"
           reads[name][1] = seq
         else
           $logger.error(line)
