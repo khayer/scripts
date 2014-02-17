@@ -70,8 +70,8 @@ def read_blast(blast)
 
     if (qname != current_query || tname != last_tname) && !tstarts.empty?
       gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
-      start = tstarts.min- 50000
-      stop = tends.max + 50000
+      start = tstarts.min- 500
+      stop = tends.max + 500
       gene_ranges[last_tname] << [start,stop,current_query]
       tstarts = []
       tends = []
