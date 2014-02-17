@@ -70,7 +70,9 @@ def read_blast(blast)
 
     if (qname != current_query || tname != last_tname) && !tstarts.empty?
       gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
-      gene_ranges[last_tname] << [tstarts.min,tends.max,current_query]
+      start = tstarts.min- 50000
+      stop = tends.max + 50000
+      gene_ranges[last_tname] << [start,stop,current_query]
       tstarts = []
       tends = []
     end
@@ -91,8 +93,27 @@ def read_blast(blast)
   gene_ranges
 end
 
-def process_reads(reads, current_range,contigs)
+def process_reads(reads, current_range,contigs,outfile_handle)
+  fwd_tmp = File.open("fwd_tmp.fa", "w")
+  rev_tmp = File.open("rev_tmp.fa", "w")
+  reads.each_pair do |reads_name,sequences|
+    if sequences[0] != "" && sequences[1] != ""
+      fwd_tmp.puts ">#{reads_name}"
+      fwd_tmp.puts sequences[0]
+      rev_tmp.puts ">#{reads_name}"
+      rev_tmp.puts sequences[1]
+    end
+  end
+  fwd_tmp.close
+  rev_tmp.close
 
+  out_trinity = run_trinity("fwd_tmp.fa","rev_tmp.fa")
+
+  File.open(out_trinity).each do |line|
+    line.chomp!
+    line = "line#{current_range[-1]}" if line =~ \^>\
+    outfile_handle.puts line
+  end
 end
 
 def run(argv)
@@ -104,6 +125,8 @@ def run(argv)
   blast = ARGV[0]
   sam_file = ARGV[1]
   outfile = File.open(ARGV[2],'w')
+
+  outfile_handle = File.open(outfile,'w')
 
   gene_ranges = read_blast(blast)
   contigs = Hash.new
@@ -136,11 +159,13 @@ def run(argv)
         end
 
       else
-        process_reads(reads, current_range,contigs)
+        process_reads(reads, current_range,contigs,outfile_handle)
         current_range =  gene_ranges[tname][0]
         reads = Hash.new
       end
     end
+
+    outfile_handle.close
 
 
 end
