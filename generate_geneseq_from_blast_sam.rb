@@ -143,6 +143,7 @@ def cut_seq(seq,cigar)
   cigar_numbers = cigar.split(/\D/).map {|e| e.to_i}
   new_seq = ""
   cigar_letters.each_with_index do |letter, i|
+    next if letter == "N" || letter == "D"
     if letter == "M"
       new_seq = seq[0..cigar_numbers[i]]
     else
