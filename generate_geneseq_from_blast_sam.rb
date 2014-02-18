@@ -70,8 +70,8 @@ def read_blast(blast)
     next if score.to_f < 120.0
     if (qname != current_query || tname != last_tname) && !tstarts.empty?
       gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
-      start = tstarts.min- 500
-      stop = tends.max + 500
+      start = tstarts.min - 5000
+      stop = tends.max + 5000
       gene_ranges[last_tname] << [start,stop,current_query]
       tstarts = []
       tends = []
@@ -117,7 +117,7 @@ def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
   fwd_tmp = File.open("fwd_tmp.fa", "w")
   rev_tmp = File.open("rev_tmp.fa", "w")
   reads.each_pair do |reads_name,sequences|
-    if sequences[0].length > 500 && sequences[1].length > 500
+    if sequences[0].length > 50 && sequences[1].length > 50
       fwd_tmp.puts ">#{reads_name}/1"
       fwd_tmp.puts sequences[0]
       rev_tmp.puts ">#{reads_name}/2"
