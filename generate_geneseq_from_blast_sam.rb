@@ -68,7 +68,7 @@ def read_blast(blast)
     qname,tname,identities,length,mismat,gaps,qstar,tqend,tstart,tend,eval,score =
     line.split("\t")
     next if score.to_f < 120.0
-    if (qname != current_query || tname != last_tname) && !tstarts.empty?
+    if (qname != current_query || tname != last_tname || (tstart.to_i-1000000> tends.sort[-1]) ) && !tstarts.empty?
       gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
       start = tstarts.min - 5000
       stop = tends.max + 5000
