@@ -109,8 +109,9 @@ def run_trinity(fwd,rev,path_to_trinity)
   #cmd = "grep -w \"100.00\" RSEM.isoforms.results | cut -f 1 | xargs samtools faidx trinity/Trinity.fasta > high_quality.fasta"
   #$logger.info(cmd)
   #k = `#{cmd}`
-  #{}`rm -r RSEM* trinity rev_tmp.fa fwd_tmp.fa`
-  "trinity/Trinity.fasta"
+  `mv trinity/Trinity.fasta high_quality.fasta`
+  `rm -r RSEM* trinity rev_tmp.fa fwd_tmp.fa`
+  "high_quality.fasta"
 end
 
 def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
@@ -129,12 +130,15 @@ def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
 
   out_trinity = run_trinity("fwd_tmp.fa","rev_tmp.fa",path_to_trinity)
 
-  File.open(out_trinity).each do |line|
-    line.chomp!
-    line = "#{line}#{current_range[-1]}" if line =~ /^>/
-    outfile_handle.puts line
+  if File.exist?(out_trinity)
+
+    File.open(out_trinity).each do |line|
+      line.chomp!
+      line = "#{line}#{current_range.join(":")}" if line =~ /^>/
+      outfile_handle.puts line
+    end
+    `rm high_quality.fasta`
   end
-  `rm high_quality.fasta`
 end
 
 def cut_seq(seq,cigar)
