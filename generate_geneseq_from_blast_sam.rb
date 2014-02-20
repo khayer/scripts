@@ -67,7 +67,7 @@ def read_blast(blast)
     line.chomp!
     qname,tname,identities,length,mismat,gaps,qstar,qend,tstart,tend,eval,score =
     line.split("\t")
-    $logger.info("score: #{score}") if qname == "gi|118130247|ref|NM_146087.2|"
+    #$logger.info("score: #{score}") if qname == "gi|118130247|ref|NM_146087.2|"
     next if score.to_f < 120.0
 
     $logger.info(line) if current_query == "gi|118130247|ref|NM_146087.2|"
@@ -76,6 +76,7 @@ def read_blast(blast)
       gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
       start = tstarts.min - 5000
       stop = tends.max + 5000
+      $logger.info([start,stop,current_query]) if current_query == "gi|118130247|ref|NM_146087.2|"
       gene_ranges[last_tname] << [start,stop,current_query]
       tstarts = []
       tends = []
