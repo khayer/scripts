@@ -65,9 +65,11 @@ def read_blast(blast)
   tends = []
   File.open(blast).each do |line|
     line.chomp!
-    qname,tname,identities,length,mismat,gaps,qstar,tqend,tstart,tend,eval,score =
+    qname,tname,identities,length,mismat,gaps,qstar,qend,tstart,tend,eval,score =
     line.split("\t")
+    $logger.info("score: #{score}")
     next if score.to_f < 120.0
+    $logger.info("YES")
     if (qname != current_query || tname != last_tname || tstart.to_i-1000000> tends.sort[-1] ) && !tstarts.empty?
       gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
       start = tstarts.min - 5000
@@ -110,7 +112,7 @@ def run_trinity(fwd,rev,path_to_trinity)
   #$logger.info(cmd)
   #k = `#{cmd}`
   `mv trinity/Trinity.fasta high_quality.fasta`
-  `rm -r RSEM* trinity rev_tmp.fa fwd_tmp.fa`
+  `rm -r trinity rev_tmp.fa fwd_tmp.fa`
   "high_quality.fasta"
 end
 
