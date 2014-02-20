@@ -67,7 +67,7 @@ def read_blast(blast)
     line.chomp!
     qname,tname,identities,length,mismat,gaps,qstar,qend,tstart,tend,eval,score =
     line.split("\t")
-    $logger.info("score: #{score}")
+    $logger.info("score: #{score}") if qname == "gi|118130247|ref|NM_146087.2|"
     next if score.to_f < 120.0
 
     $logger.info(line) if current_query == "gi|118130247|ref|NM_146087.2|"
