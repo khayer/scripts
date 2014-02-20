@@ -141,7 +141,8 @@ def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
 
     File.open(out_trinity).each do |line|
       line.chomp!
-      line = "#{line}#{current_range.join(":")}" if line =~ /^>/
+      fields = line.split(" ")
+      line = "#{line[0]}#{current_range.join(":")} #{line[1..-1].join(" ")}" if line =~ /^>/
       outfile_handle.puts line
     end
     `rm high_quality.fasta`
