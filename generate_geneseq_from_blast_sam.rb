@@ -70,13 +70,13 @@ def read_blast(blast)
     #$logger.info("score: #{score}") if qname == "gi|118130247|ref|NM_146087.2|"
     next if score.to_f < 120.0
 
-    $logger.info(line) if current_query == "gi|118130247|ref|NM_146087.2|"
+    #$logger.info(line) if current_query == "gi|118130247|ref|NM_146087.2|"
     if (qname != current_query || tname != last_tname || tstart.to_i-1000000> tends.sort[-1] ) && !tstarts.empty?
-      $logger.info("YES") if current_query == "gi|118130247|ref|NM_146087.2|"
+      #$logger.info("YES") if current_query == "gi|118130247|ref|NM_146087.2|"
       gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
       start = tstarts.min - 5000
       stop = tends.max + 5000
-      $logger.info([start,stop,current_query]) if current_query == "gi|118130247|ref|NM_146087.2|"
+      #$logger.info([start,stop,current_query]) if current_query == "gi|118130247|ref|NM_146087.2|"
       gene_ranges[last_tname] << [start,stop,current_query]
       tstarts = []
       tends = []
@@ -92,12 +92,12 @@ def read_blast(blast)
    gene_ranges[last_tname] << [tstarts.min,tends.max,current_query]
 
   gene_ranges.each_pair do |contig, ranges|
-    $logger.info(ranges) if ranges[-1] == "gi|118130247|ref|NM_146087.2|"
+    #$logger.info(ranges) if ranges[-1] == "gi|118130247|ref|NM_146087.2|"
     gene_ranges[contig] = ranges.sort
   end
 
   gene_ranges
-  exit
+
 end
 
 def run_trinity(fwd,rev,path_to_trinity)
