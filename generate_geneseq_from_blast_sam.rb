@@ -103,14 +103,14 @@ def run_trinity(fwd,rev,path_to_trinity)
   #$logger.info(cmd)
   #k = `#{cmd}`
   # util/RSEM_util/run_RSEM.pl --transcript trinity/Trinity.fasta --name_sorted_bam bowtie_out/bowtie_out.nameSorted.PropMapPairsForRSEM.bam --paired
-  cmd = "#{path_to_trinity}/util/RSEM_util/run_RSEM_align_n_estimate.pl  --transcripts trinity/Trinity.fasta --seqType fa  --left #{fwd} --right #{rev} -- --no-bam-output"
-  $logger.info(cmd)
-  k = `#{cmd}`
-  cmd = "grep -w \"100.00\" RSEM.isoforms.results | cut -f 1 | xargs samtools faidx trinity/Trinity.fasta > high_quality.fasta"
-  $logger.info(cmd)
-  k = `#{cmd}`
-  `rm -r RSEM* trinity rev_tmp.fa fwd_tmp.fa`
-  "high_quality.fasta"
+  #cmd = "#{path_to_trinity}/util/RSEM_util/run_RSEM_align_n_estimate.pl  --transcripts trinity/Trinity.fasta --seqType fa  --left #{fwd} --right #{rev} -- --no-bam-output"
+  #$logger.info(cmd)
+  #k = `#{cmd}`
+  #cmd = "grep -w \"100.00\" RSEM.isoforms.results | cut -f 1 | xargs samtools faidx trinity/Trinity.fasta > high_quality.fasta"
+  #$logger.info(cmd)
+  #k = `#{cmd}`
+  #{}`rm -r RSEM* trinity rev_tmp.fa fwd_tmp.fa`
+  "trinity/Trinity.fasta"
 end
 
 def process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
