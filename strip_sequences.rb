@@ -65,7 +65,7 @@ end
 def read_blast(blast,genes)
   rel_seq = {}
   genes.each_pair do |name,id|
-    blast_id = `grep #{id} #{blast}`
+    blast_id = `grep "#{id}" #{blast}`
     blast_id.chomp!
     lines = blast_id.split("\n").map {|e| e.split("\t")}
     id = nil
@@ -174,7 +174,7 @@ def run(argv)
   rel_seq = read_blast(blast,genes)
 
   rel_seq.each_pair do |name, id|
-    seq = `samtools faidx #{sequences} #{name}`
+    seq = `samtools faidx #{sequences} "#{name}"`
     seq.chomp!
     seq.sub!(/^>#{name}/,">#{id}_#{sample_name}")
     outfile.puts(seq)
