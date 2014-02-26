@@ -176,7 +176,7 @@ def run(argv)
   rel_seq.each_pair do |name, id|
     seq = `samtools faidx #{sequences} "#{name}"`
     seq.chomp!
-    seq.sub!(/^>#{name.gsub(/\|/, "\|")}/,">#{id}_#{sample_name}_#{genes[id]}")
+    seq.sub!(/^>\S*/,">#{id}_#{sample_name}_#{genes[id]}")
     outfile_handle.puts(seq)
   end
 
