@@ -64,7 +64,7 @@ end
 
 def read_blast(blast,genes)
   genes.each_pair do |name,id|
-
+    blast_id = `grep #{id} #{blast}`
 
 end
 
@@ -156,6 +156,8 @@ def run(argv)
 
   genes = read_genes_file(genes_file)
   gene_ranges = read_blast(blast,genes)
+  
+
   contigs = Hash.new
   reads = Hash.new
   i = 0
