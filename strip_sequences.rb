@@ -177,7 +177,7 @@ def run(argv)
     seq = `samtools faidx #{sequences} "#{name}"`
     seq.chomp!
     seq.sub!(/^>#{name}/,">#{id}_#{sample_name}")
-    outfile.puts(seq)
+    outfile_handle.puts(seq)
   end
 
   outfile_handle.close
