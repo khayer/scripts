@@ -25,7 +25,7 @@ def setup_options(args)
   options = {:cut_off =>  5, :log_level => "info"}
 
   opt_parser = OptionParser.new do |opts|
-    opts.banner = "Usage: #{$0} [options] sorted_blast sequences.fa genes_file outfile.fa"
+    opts.banner = "Usage: #{$0} [options] sorted_blast sequences.fa genes_file outfile.fa sample_name"
     #opts.banner = "Usage: compare_fpkm_values [options] fpkm_values.txt"
     opts.separator ""
     opts.separator "genes_file example:"
@@ -63,9 +63,24 @@ def setup_options(args)
 end
 
 def read_blast(blast,genes)
+  rel_seq = {}
   genes.each_pair do |name,id|
     blast_id = `grep #{id} #{blast}`
-
+    blast_id.chomp!
+    lines = blast_id.split("\n").map {|e| e.split("\t")}
+    id = nil
+    fasta_name = nil
+    lines.each do |line|
+      name = line[0]
+      if name.include?(line[1])
+        fasta_name = name
+        id = line[1]
+        rel_seq[name] = id
+        break
+      end
+    end
+  end
+  rel_seq
 end
 
 def run_trinity(fwd,rev,path_to_trinity)
@@ -148,81 +163,23 @@ def run(argv)
   $logger.debug(options)
   $logger.debug(argv)
 
-  # sorted_blast sequences.fa genes_file outfile.fa
+  # sorted_blast sequences.fa genes_file outfile.fa sample_name
   blast = ARGV[0]
   sequences = ARGV[1]
   genes_file = ARGV[2]
   outfile_handle = File.open(ARGV[3],'w')
+  sample_name = ARGV[4]
 
   genes = read_genes_file(genes_file)
-  gene_ranges = read_blast(blast,genes)
-  
+  rel_seq = read_blast(blast,genes)
 
-  contigs = Hash.new
-  reads = Hash.new
-  i = 0
-  current_range = nil
-  last_tname = ""
-  File.open(sam_file).each do |line|
-    line.chomp!
-    if line =~ /^@SQ/
-      name = line.split("SN:")[1].split(" ")[0]
-      length = line.split("LN:")[1].split(" ")[0].to_i
-      contigs[name] = length
-    end
-    unless line =~ /^@/
-      # FCH8JMRADXX:2:1214:6191:40267#CGCTCATT  1123  gi|472278466|gb|KB708127.1| 58193489  60  100M  = 58193525  136 CATAAGTATTAATCTATGTATTTCCACGTGGAGAATGCTTCAGTGTCCTATATTCCCAACCACTACATGGCATCTTCTCTGGTGGCTTCTCTTTGCCTTC  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      name, bit_flag, tname, tstart, qual, cigar, d,d,d,seq = line.split("\t")
-      next unless gene_ranges.keys.include?(tname)
-      if tname != last_tname
-
-        last_tname = tname
-        unless reads.empty?
-          $logger.info("current range: #{current_range}")
-          $logger.info("reads length: #{reads.length}")
-          process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
-        end
-        current_range = gene_ranges[tname][0]
-        i = 0
-        $logger.info("current range: #{current_range}")
-        $logger.info("reads length: #{reads.length}")
-        reads = Hash.new
-
-
-      end
-      current_range = gene_ranges[tname][0] unless current_range
-
-      next if tstart.to_i < current_range[0]
-      if tstart.to_i < current_range[1]
-
-        bit_flag = bit_flag.to_i.to_s(2).split("")
-        reads[name] = ["",""] unless reads[name]
-
-        seq = cut_seq(seq,cigar)
-        if bit_flag[-7] == "1"
-           reads[name][0] = seq
-        elsif bit_flag[-8] == "1"
-          reads[name][1] = seq
-        else
-          $logger.error(line)
-          raise("READ NOT FIRST OR LAST IN PAIR?")
-        end
-
-      else
-        if reads != {}
-          $logger.info("PROCESS:: current range: #{current_range}")
-          $logger.info("PROCESS:: reads length: #{reads.length}")
-          process_reads(reads, current_range,contigs,outfile_handle,path_to_trinity)
-        end
-        i += 1
-
-        current_range =  gene_ranges[tname][i]
-        $logger.info("current range: #{current_range}; i = #{i}") if current_range
-        $logger.info("reads length: #{reads.length}") if current_range
-        reads = Hash.new
-      end
-    end
+  rel_seq.each_pair do |name, id|
+    seq = `samtools faidx #{sequences} #{name}`
+    seq.chomp!
+    seq.sub!(/^>#{name}/,">#{id}_#{sample_name}")
+    outfile.puts(seq)
   end
+
   outfile_handle.close
 end
 
