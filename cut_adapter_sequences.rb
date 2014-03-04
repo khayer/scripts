@@ -7,7 +7,6 @@ require 'csv'
 
 $logger = Logger.new(STDERR)
 
-
 # Initialize logger
 def setup_logger(loglevel)
   case loglevel
@@ -60,7 +59,7 @@ end
 def read_adapter(adapter_file)
   adapters = {}
   range = (0..99)
-  CSV.foreach(adapter_file, {:headers => :first_row, :col_sep => " "} do |row|
+  CSV.foreach(adapter_file, {:headers => :first_row, :col_sep => " "}) do |row|
     new_range = range.to_a - (row["reads_start"].to_i..row["reads_end"].to_i).to_a
     new_range = (new_range[0]..new_range[-1])
     while !(new_range.each_cons(2).all? { |x,y| y == x + 1 })
