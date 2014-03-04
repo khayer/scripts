@@ -25,7 +25,7 @@ def setup_options(args)
   options = {:cut_off =>  5, :log_level => "info"}
 
   opt_parser = OptionParser.new do |opts|
-    opts.banner = "Usage: #{$0} [options] genes_file blastx_master compare1 [compare2...]"
+    opts.banner = "Usage: #{$0} [options] fwd.fq rev.fq adapter_fwd adapter_rev"
     #opts.banner = "Usage: compare_fpkm_values [options] fpkm_values.txt"
     opts.separator ""
 
@@ -59,9 +59,11 @@ end
 def read_adapter(adapter_file)
   adapters = {}
   range = (0..99)
+  $logger.info("Reading adapter #{adapter_file}")
   CSV.foreach(adapter_file, {:headers => :first_row, :col_sep => " "}) do |row|
     new_range = range.to_a - (row["reads_start"].to_i..row["reads_end"].to_i).to_a
     new_range = (new_range[0]..new_range[-1])
+
     while !(new_range.each_cons(2).all? { |x,y| y == x + 1 })
       if row["reads_start"].to_i < 99-row["reads_end"].to_i
         new_range.delete_at(0)
@@ -94,8 +96,10 @@ def run(argv)
 
   rev_hand = File.open(rev)
   i = 0
+
   range_fwd = (0..99)
   range_rev = (0..99)
+  $logger.info("Starting to write out sequences")
   File.open(fwd).each do |line|
     line.chomp!
     line_rev = rev_hand.readline().chomp
@@ -115,6 +119,9 @@ def run(argv)
     when 3
       line = line[range_fwd]
       line_rev = line_rev[range_rev]
+      # Reset
+      range_fwd = (0..99)
+      range_rev = (0..99)
       i = 0
     end
     fwd_out.puts line
