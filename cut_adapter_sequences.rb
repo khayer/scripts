@@ -59,14 +59,13 @@ def setup_options(args)
   options
 end
 
-def read_adapter(adapter_file, counter)
+def read_adapter(adapter_file)
   adapters = {}
   range = (0..99)
   $logger.info("Reading adapter #{adapter_file}")
   CSV.foreach(adapter_file, {:headers => :first_row, :col_sep => " "}) do |row|
     new_range = range.to_a - (row["reads_start"].to_i..row["reads_end"].to_i).to_a
     new_range = (new_range[0]..new_range[-1])
-    counter += 1
     while !(new_range.each_cons(2).all? { |x,y| y == x + 1 })
       if row["reads_start"].to_i < 99-row["reads_end"].to_i
         new_range.delete_at(0)
@@ -94,9 +93,10 @@ def run(argv)
   fwd_out = File.open("#{fwd}_new.fq",'w')
   rev_out = File.open("#{rev}_new.fq",'w')
 
-  fwd_adapters = read_adapter(fwd_adapter, $counter_fwd)
-  rev_adapters = read_adapter(rev_adapter, $counter_rev)
-
+  fwd_adapters = read_adapter(fwd_adapter)
+  $counter_fwd = fwd_adapters.length
+  rev_adapters = read_adapter(rev_adapter)
+  $counter_rev = rev_adapters.length
   rev_hand = File.open(rev)
   i = 0
 
