@@ -129,7 +129,7 @@ def run(argv)
       i = 0
     end
     fwd_out.puts line
-    rev_out.puts line
+    rev_out.puts line_rev
   end
   rev_hand.close
   fwd_out.close
