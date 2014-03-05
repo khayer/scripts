@@ -74,8 +74,8 @@ def read_blast(blast)
     if (qname != current_query || tname != last_tname || tstart.to_i-1000000> tends.sort[-1] ) && !tstarts.empty?
       #$logger.info("YES") if current_query == "gi|118130247|ref|NM_146087.2|"
       gene_ranges[last_tname] = [] unless gene_ranges[last_tname]
-      start = tstarts.min - 5000
-      stop = tends.max + 5000
+      start = tstarts.min - 50000
+      stop = tends.max + 50000
       #$logger.info([start,stop,current_query]) if current_query == "gi|118130247|ref|NM_146087.2|"
       gene_ranges[last_tname] << [start,stop,current_query]
       tstarts = []
