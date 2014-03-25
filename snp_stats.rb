@@ -69,10 +69,10 @@ def run(argv)
   sample_number = nil
   total_number_of_bases = 0
   compare_samples = Hash.new
-  
+
   table = Hash.new
   ## table
-  ## table[sample_name1] 
+  ## table[sample_name1]
 
   in_vcf.each do |line|
     line.chomp!
@@ -102,6 +102,7 @@ def run(argv)
       else
         fields = line.split("\t")
         # 0/1:8,9:17:99:218,0,184
+        next unless fields[6] =~ /(\.|PASS)/
         next if fields[sample_number] =~ /\.\/\./
         sample_info = fields[sample_number].split(":")
         next if sample_info[2].to_i < options[:cut_off]
