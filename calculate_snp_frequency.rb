@@ -88,6 +88,7 @@ def run(argv)
       else
         fields = line.split("\t")
         # 0/1:8,9:17:99:218,0,184
+        next unless fields[6] =~ /(\.|PASS)/
         next if fields[sample_number] =~ /\.\/\./
         sample_info = fields[sample_number].split(":")
         next if sample_info[2].to_i < options[:cut_off]
