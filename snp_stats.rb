@@ -119,6 +119,7 @@ def run(argv)
         if unique
           table[sample_name] += 1
         else
+          table[shared_with.join("")] = 0 unless table[shared_with.join("")]
           table[shared_with.join("")] += 1
         end
       end
