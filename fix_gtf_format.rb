@@ -65,6 +65,7 @@ def run(argv)
   $logger.debug(options)
   $logger.debug(argv)
 
+  genes_file = ARGV[0]
   last_gene = nil
   positions = []
   lines = []
