@@ -99,7 +99,7 @@ def read_sequences2(sequences_file)
   name = ""
   seq = ""
   $logger.debug("reading sequences")
-  File.buffer(sequences_file).each do |buf|
+  File.buffer(sequences_file) do |buf|
     buf.split("\n").each do |line|
       line.chomp!
       if line =~ /^>/
