@@ -62,6 +62,7 @@ def read_sequences(sequences_file)
   sequences = {}
   name = ""
   seq = ""
+  $logger.debug("reading sequences")
   File.open(sequences_file).each do |line|
     line.chomp!
     if line =~ /^>/
@@ -74,9 +75,9 @@ def read_sequences(sequences_file)
       seq += line
     end
   end
+  $logger.debug("done reading sequences")
   sequences[name] = seq
   sequences
-
 end
 
 def read_variants(vcf_file)
@@ -110,11 +111,14 @@ def run(argv)
   sample_name = ARGV[4]
 
   sequences = read_sequences(sequences_file)
+  $logger.debug("reading gtf files")
   genes = GTF.new(genes_file)
   genes.create_index()
+  $logger.debug("reading vcf files")
   vcf = read_variants(vcf_file)
 
   vcf.each do |transcript_id|
+    $logger.debug("lopping through output")
     key = genes.index.select {|e| e[-1] == transcript_id}
     trans = genes.transcript(key)
     seq = ""
