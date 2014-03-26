@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'optparse'
 require 'logger'
-require 'benchmarking_scripts'
 
 # 2014/2/14 Katharina Hayer
 
@@ -26,7 +25,7 @@ def setup_options(args)
   options = {:cut_off =>  5, :log_level => "info"}
 
   opt_parser = OptionParser.new do |opts|
-    opts.banner = "Usage: #{$0} [options] sequences.fa genes.gtf variations.vcf outfile.fa sample_name"
+    opts.banner = "Usage: #{$0} [options] in.gtf"
     #opts.banner = "Usage: compare_fpkm_values [options] fpkm_values.txt"
     opts.separator ""
     opts.separator ""
@@ -58,43 +57,7 @@ def setup_options(args)
   options
 end
 
-def read_sequences(sequences_file)
-  sequences = {}
-  name = ""
-  seq = ""
-  File.open(sequences_file).each do |line|
-    line.chomp!
-    if line =~ /^>/
-      unless name == ""
-        sequences[name] = seq
-        seq = ""
-      end
-      name = line.split(" ")[0].delete(">")
-    else
-      seq += line
-    end
-  end
-  sequences[name] = seq
-  sequences
 
-end
-
-def read_variants(vcf_file)
-  vcf = []
-  File.open(vcf_file).each do |line|
-    line.chomp!
-    fields = line.split["\t"]
-    info = fields[7]
-    effects = info.split("EFF=").split(",")
-    effects.each do |eff|
-      next unless eff =~ /HIGH/
-      eff = eff.split("|")
-      # eff[8] is transcript_id
-      vcf << eff[8] unless vcf.includes(eff[8])
-    end
-  end
-  vcf
-end
 
 def run(argv)
   options = setup_options(argv)
@@ -102,26 +65,38 @@ def run(argv)
   $logger.debug(options)
   $logger.debug(argv)
 
-  # sequences.fa genes.gtf variations.vcf outfile.fa sample_name"
-  sequences_file = ARGV[0]
-  genes_file = ARGV[1]
-  vcf_file = ARGV[2]
-  outfile_handle = File.open(ARGV[3],'w')
-  sample_name = ARGV[4]
-
-  sequences = read_sequences(sequences_file)
-  genes = GTF.new(genes_file)
-  genes.create_index()
-  vcf = read_variants(vcf_file)
-
-  vcf.each do |transcript_id|
-    key = genes.index.select {|e| e[-1] == transcript_id}
-    trans = genes.transcript(key)
-
+  last_gene = nil
+  positions = []
+  lines = []
+  File.open(genes_file).each do |line|
+    line.chomp?
+    name = line.split("transcript_id \"")[1].split("\"")[0]
+    last_gene ||= name
+    if name != last_gene
+      positions.sort!
+      trans_line = lines[0].split("\t")
+      trans_line[2] = "transcript"
+      trans_line[3] = positions[0]
+      trans_line[4] = positions[-1]
+      puts trans_line.join("\t")
+      puts lines.join("\n")
+      positions = []
+      lines = []
+      last_gene = name
+    end
+    positions << line.split("\t")[3].to_i
+    positions << line.split("\t")[4].to_i
+    lines << line
   end
+  positions.sort!
+  trans_line = lines[0].split("\t")
+  trans_line[2] = "transcript"
+  trans_line[3] = positions[0]
+  trans_line[4] = positions[-1]
+  puts trans_line.join("\t")
+  puts lines.join("\n")
 
 
-  outfile_handle.close
 end
 
 if __FILE__ == $0
