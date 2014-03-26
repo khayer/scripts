@@ -7,6 +7,19 @@ require 'benchmarking_scripts'
 
 $logger = Logger.new(STDERR)
 
+class File
+  def self.buffer(path)
+    n = 0
+    size = File.size( path )
+    chunk = 2**16
+    File.open(path, "rb") do |f|
+      while n < size
+        n += chunk
+        yield f.sysread( chunk )
+      end
+    end
+  end
+end
 
 # Initialize logger
 def setup_logger(loglevel)
@@ -80,6 +93,31 @@ def read_sequences(sequences_file)
   sequences
 end
 
+
+def read_sequences2(sequences_file)
+  sequences = {}
+  name = ""
+  seq = ""
+  $logger.debug("reading sequences")
+  File.buffer(sequences_file).each do |buf|
+    buf.split("\n").each do |line|
+      line.chomp!
+      if line =~ /^>/
+        unless name == ""
+          sequences[name] = seq
+          seq = ""
+        end
+        name = line.split(" ")[0].delete(">")
+      else
+        seq += line
+      end
+    end
+  end
+  $logger.debug("done reading sequences")
+  sequences[name] = seq
+  sequences
+end
+
 def read_variants(vcf_file)
   vcf = []
   File.open(vcf_file).each do |line|
@@ -110,7 +148,7 @@ def run(argv)
   outfile_handle = File.open(ARGV[3],'w')
   sample_name = ARGV[4]
 
-  sequences = read_sequences(sequences_file)
+  sequences = read_sequences2(sequences_file)
   $logger.debug("reading gtf files")
   genes = GTF.new(genes_file)
   genes.create_index()
