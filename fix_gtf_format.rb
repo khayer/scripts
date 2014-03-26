@@ -66,11 +66,12 @@ def run(argv)
   $logger.debug(argv)
 
   genes_file = argv[0]
+
   last_gene = nil
   positions = []
   lines = []
   File.open(genes_file).each do |line|
-    line.chomp?
+    line.chomp!
     name = line.split("transcript_id \"")[1].split("\"")[0]
     last_gene ||= name
     if name != last_gene
