@@ -117,7 +117,12 @@ def run(argv)
   vcf.each do |transcript_id|
     key = genes.index.select {|e| e[-1] == transcript_id}
     trans = genes.transcript(key)
-
+    seq = ""
+    for i in (0...trans.length/2)
+      seq += sequences[key[0]][trans[i]...trans[i+1]]
+    end
+    outfile_handle.puts ">#{transcript_id}"
+    outfile_handle.puts seq
   end
 
 
