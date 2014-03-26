@@ -80,6 +80,7 @@ def run(argv)
       trans_line[2] = "transcript"
       trans_line[3] = positions[0]
       trans_line[4] = positions[-1]
+      trans_line[-1] = trans_line[-1].gsub(/exon_number\ \"1\"\;/,"")
       puts trans_line.join("\t")
       puts lines.join("\n")
       positions = []
