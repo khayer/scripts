@@ -175,7 +175,7 @@ def run(argv)
       seq += IO.read(sequences_file,length,offset)
     end
     outfile_handle.puts ">#{transcript_id}"
-    outfile_handle.puts seq.chomp!
+    outfile_handle.puts seq.split("\n").join("")
   end
 
 
