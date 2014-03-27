@@ -155,7 +155,10 @@ def run(argv)
   fa_file = File.open(sequences_file)
   vcf.each do |transcript_id|
     $logger.debug("lopping through output")
+    puts transcript_id
     key = genes.index.select {|e| e[-1] == transcript_id}
+    puts genes.index[0]
+    puts key
     trans = genes.transcript(key)
     seq_contig = ""
     fa_file.pos = sequences_index[key[0]]
