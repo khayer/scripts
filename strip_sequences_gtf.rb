@@ -170,7 +170,8 @@ def run(argv)
     #  seq_contig += line
     #end
     seq = ""
-    for i in (0...trans.length/2)
+    for k in (0...trans.length/2)
+      i = k*2
       length = trans[i+1]-trans[i]+((trans[i+1]-trans[i]))
       offset = sequences_index[key[0]]+trans[i]+(trans[i]/70)
       pre_cut = IO.read(sequences_file,length,offset)
