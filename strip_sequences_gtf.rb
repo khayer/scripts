@@ -172,7 +172,7 @@ def run(argv)
     for i in (0...trans.length/2)
       length = trans[i+1]-trans[i]
       offset = sequences_index[key[0]]+trans[i]
-      seq += IO.read(sequences_file,length,offset)
+      seq += IO.read(sequences_file,length,offset).chomp!
     end
     outfile_handle.puts ">#{transcript_id}"
     outfile_handle.puts seq
