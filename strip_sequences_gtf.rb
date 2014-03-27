@@ -101,7 +101,7 @@ def read_sequences2(sequences_file)
   file_handle.each do |line|
       line.chomp!
       if line =~ /^>/
-        name = line.split(" ")[0].gsub(/^>/,"") 
+        name = line.split(" ")[0].split("|")[3]
         sequences_index[name] = file_handle.pos
       end
   end
@@ -147,6 +147,7 @@ def run(argv)
   $logger.debug("reading gtf files; #{sequences_index.length} Transcripts!")
   genes = GTF.new(genes_file)
   genes.create_index()
+  puts genes.index
   $logger.debug("#{genes.index.length} Genes ")
   $logger.debug("reading vcf files")
   vcf = read_variants(vcf_file)
