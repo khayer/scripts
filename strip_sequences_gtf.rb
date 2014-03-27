@@ -117,7 +117,7 @@ def read_variants(vcf_file)
     fields = line.split("\t")
     puts fields
     info = fields[7]
-    effects = info.split("EFF=").split(",")
+    effects = info.split("EFF=")[1].split(",")
     effects.each do |eff|
       next unless eff =~ /HIGH/
       eff = eff.split("|")
