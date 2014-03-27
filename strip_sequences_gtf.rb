@@ -164,6 +164,7 @@ def run(argv)
     seq_contig = ""
     fa_file.pos = sequences_index[key[0]]
     fa_file.each do |line|
+      line.chomp!
       break if line =~ /^>/
       seq_contig += line
     end
