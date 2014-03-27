@@ -147,7 +147,7 @@ def run(argv)
   $logger.debug("reading gtf files; #{sequences_index.length} Transcripts!")
   genes = GTF.new(genes_file)
   genes.create_index()
-  puts genes.index
+  #puts genes.index
   $logger.debug("#{genes.index.length} Genes ")
   $logger.debug("reading vcf files")
   vcf = read_variants(vcf_file)
@@ -158,7 +158,7 @@ def run(argv)
     $logger.debug("lopping through output")
     puts transcript_id
     key = genes.index.select {|e| e[-1].gsub(/\W/,"") == transcript_id}
-    puts genes.index[0..5]
+    key = keys.key[0]
     puts key
     trans = genes.transcript(key)
     seq_contig = ""
