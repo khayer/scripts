@@ -142,11 +142,13 @@ def run(argv)
   sample_name = ARGV[4]
 
   sequences_index = read_sequences2(sequences_file)
-  $logger.debug("reading gtf files")
+  $logger.debug("reading gtf files; #{sequences_index.length} Transcripts!")
   genes = GTF.new(genes_file)
   genes.create_index()
+  $logger.debug("#{genes.length} Genes ")
   $logger.debug("reading vcf files")
   vcf = read_variants(vcf_file)
+  $logger.debug("#{vcf.length} locations in gtf file (vcf[0] :#{vcf[0]}")
 
   fa_file = File.open(sequences_file)
   vcf.each do |transcript_id|
