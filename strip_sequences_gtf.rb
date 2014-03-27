@@ -95,27 +95,19 @@ end
 
 
 def read_sequences2(sequences_file)
-  sequences = {}
-  name = ""
-  seq = ""
+  sequences_index = {}
   $logger.debug("reading sequences")
-  File.buffer(sequences_file) do |buf|
-    buf.split("\n").each do |line|
+  file_handle = File.open(sequences_file)
+  file_handle.each do |line|
       line.chomp!
       if line =~ /^>/
-        unless name == ""
-          sequences[name] = seq
-          seq = ""
-        end
         name = line.split(" ")[0].delete(">")
-      else
-        seq += line
+        sequences_index[name] = file_handle.pos
       end
     end
   end
   $logger.debug("done reading sequences")
-  sequences[name] = seq
-  sequences
+  sequences_index
 end
 
 def read_variants(vcf_file)
@@ -148,20 +140,27 @@ def run(argv)
   outfile_handle = File.open(ARGV[3],'w')
   sample_name = ARGV[4]
 
-  sequences = read_sequences2(sequences_file)
+  sequences_index = read_sequences2(sequences_file)
   $logger.debug("reading gtf files")
   genes = GTF.new(genes_file)
   genes.create_index()
   $logger.debug("reading vcf files")
   vcf = read_variants(vcf_file)
 
+  fa_file = File.open(sequences_file)
   vcf.each do |transcript_id|
     $logger.debug("lopping through output")
     key = genes.index.select {|e| e[-1] == transcript_id}
     trans = genes.transcript(key)
+    seq_contig = ""
+    fa_file.pos = sequences_index[key[0]]
+    fa_file.each do |line|
+      break if line =~ /^>/
+      seq_contig += line
+    end
     seq = ""
     for i in (0...trans.length/2)
-      seq += sequences[key[0]][trans[i]...trans[i+1]]
+      seq += seq_contig[trans[i]...trans[i+1]]
     end
     outfile_handle.puts ">#{transcript_id}"
     outfile_handle.puts seq
