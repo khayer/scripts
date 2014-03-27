@@ -119,6 +119,7 @@ def read_variants(vcf_file)
     info = fields[7]
     effects = info.split("EFF=")[1].split(",")
     effects.each do |eff|
+      puts eff
       next unless eff =~ /HIGH/
       eff = eff.split("|")
       # eff[8] is transcript_id
