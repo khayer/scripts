@@ -157,7 +157,7 @@ def run(argv)
     $logger.debug("lopping through output")
     puts transcript_id
     key = genes.index.select {|e| e[-1] == transcript_id}
-    puts genes.index[0]
+    puts genes.index[0..5]
     puts key
     trans = genes.transcript(key)
     seq_contig = ""
