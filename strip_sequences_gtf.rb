@@ -172,7 +172,7 @@ def run(argv)
     seq = ""
     for i in (0...trans.length/2)
       length = trans[i+1]-trans[i]+((trans[i+1]-trans[i]))
-      offset = sequences_index[key[0]]+trans[i]+(trans[i])
+      offset = sequences_index[key[0]]+trans[i]+(trans[i]/70)
       pre_cut = IO.read(sequences_file,length,offset)
       seq += pre_cut.split("\n").join("")[0...trans[i+1]-trans[i]]
       #puts seq
