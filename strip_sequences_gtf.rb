@@ -114,7 +114,7 @@ def read_variants(vcf_file)
   File.open(vcf_file).each do |line|
     line.chomp!
     puts line
-    fields = line.split[" "]
+    fields = line.split("\t")
     puts fields
     info = fields[7]
     effects = info.split("EFF=").split(",")
