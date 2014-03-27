@@ -101,7 +101,7 @@ def read_sequences2(sequences_file)
   file_handle.each do |line|
       line.chomp!
       if line =~ /^>/
-        name = line.split(" ")[0].split("|")[3]
+        name = line.split(" ")[0].gsub(/^>/,"")
         sequences_index[name] = file_handle.pos
       end
   end
