@@ -101,7 +101,7 @@ def read_sequences2(sequences_file)
   file_handle.each do |line|
       line.chomp!
       if line =~ /^>/
-        name = line.split(" ")[0].delete(">")
+        name = line.split(" ")[0].gsub(/^>/,"") 
         sequences_index[name] = file_handle.pos
       end
   end
@@ -113,9 +113,9 @@ def read_variants(vcf_file)
   vcf = []
   File.open(vcf_file).each do |line|
     line.chomp!
-    puts line
+    #puts line
     fields = line.split("\t")
-    puts fields
+    #puts fields
     info = fields[7]
     effects = info.split("EFF=")[1].split(",")
     effects.each do |eff|
