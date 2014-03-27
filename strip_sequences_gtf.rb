@@ -171,15 +171,16 @@ def run(argv)
     #end
     seq = ""
     for i in (0...trans.length/2)
-      length = trans[i+1]-trans[i]+((trans[i+1]-trans[i])/70)
-      offset = sequences_index[key[0]]+trans[i]+(trans[i]/70)
-      seq += IO.read(sequences_file,length,offset)
+      length = trans[i+1]-trans[i]+((trans[i+1]-trans[i]))
+      offset = sequences_index[key[0]]+trans[i]+(trans[i])
+      pre_cut = IO.read(sequences_file,length,offset)
+      seq += pre_cut.split("\n").join("")[0...trans[i+1]-trans[i]]
       #puts seq
       #puts sequences_index[key[0]]
       #STDIN.gets
     end
     outfile_handle.puts ">#{transcript_id}"
-    outfile_handle.puts seq.split("\n").join("")
+    outfile_handle.puts seq
   end
 
 
