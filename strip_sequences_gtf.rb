@@ -104,7 +104,6 @@ def read_sequences2(sequences_file)
         name = line.split(" ")[0].delete(">")
         sequences_index[name] = file_handle.pos
       end
-    end
   end
   $logger.debug("done reading sequences")
   sequences_index
