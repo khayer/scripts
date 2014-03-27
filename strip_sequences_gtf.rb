@@ -153,7 +153,7 @@ def run(argv)
   vcf = read_variants(vcf_file)
   $logger.debug("#{vcf.length} locations in gtf file (vcf[0] :#{vcf[0]}")
 
-  fa_file = File.open(sequences_file)
+  #fa_file = File.open(sequences_file)
   vcf.each do |transcript_id|
     $logger.debug("lopping through output")
     puts transcript_id
@@ -161,6 +161,7 @@ def run(argv)
     key = key.keys[0]
     puts key
     trans = genes.transcript(key)
+    puts trans
     seq_contig = ""
     #fa_file.pos = sequences_index[key[0]]
     #fa_file.each do |line|
@@ -173,6 +174,9 @@ def run(argv)
       length = trans[i+1]-trans[i]
       offset = sequences_index[key[0]]+trans[i]
       seq += IO.read(sequences_file,length,offset)
+      puts seq
+      puts sequences_index[key[0]]
+      STDIN.gets
     end
     outfile_handle.puts ">#{transcript_id}"
     outfile_handle.puts seq.split("\n").join("")
