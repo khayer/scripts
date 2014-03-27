@@ -123,7 +123,7 @@ def read_variants(vcf_file)
       next unless eff =~ /HIGH/
       eff = eff.split("|")
       # eff[8] is transcript_id
-      vcf << eff[8] unless vcf.includes(eff[8])
+      vcf << eff[8] unless vcf.include?(eff[8])
     end
   end
   vcf
