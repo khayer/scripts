@@ -162,15 +162,17 @@ def run(argv)
     puts key
     trans = genes.transcript(key)
     seq_contig = ""
-    fa_file.pos = sequences_index[key[0]]
-    fa_file.each do |line|
-      line.chomp!
-      break if line =~ /^>/
-      seq_contig += line
-    end
+    #fa_file.pos = sequences_index[key[0]]
+    #fa_file.each do |line|
+    #  line.chomp!
+    #  break if line =~ /^>/
+    #  seq_contig += line
+    #end
     seq = ""
     for i in (0...trans.length/2)
-      seq += seq_contig[trans[i]...trans[i+1]]
+      length = trans[i+1]-trans[i]
+      offset = sequences_index[key[0]]+trans[i]
+      seq += IO.read(sequences_file,length,offset)
     end
     outfile_handle.puts ">#{transcript_id}"
     outfile_handle.puts seq
