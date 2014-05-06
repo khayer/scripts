@@ -316,7 +316,7 @@ File.open(vcf_file).each do |line|
     end
     sheet1.row(i).push impact,effect,codon_change,amino_change,Spreadsheet::Link.new(link_transcript_id,gene_name)
   else
-    sheet1.row(i).push 'n/a','n/a','n/a','n/a'
+    sheet1.row(i).push 'n/a','n/a','n/a','n/a','n/a'
   end
   phast_cons_score = get_phast_cons_score(phast_cons,fields[0],fields[1].to_i)
   homozygosity_score = get_homozygosity_score(homo_score,fields[1].to_i)
