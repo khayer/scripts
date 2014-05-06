@@ -279,8 +279,8 @@ File.open(vcf_file).each do |line|
   sheet1.row(i).push wik_base, wik_fields[0], wik_fields[1], wik_fields[3].to_i
   target_base = get_base(target_fields,fields)
   sheet1.row(i).push target_base
-  if line =~ /EFF/
-    STDERR.puts line
+  if line =~ /(HIGH|MODERATE)/
+    #STDERR.puts line
     ###INFO=<ID=EFF,Number=.,Type=String,
     #Description="Predicted effects for this variant.Format:
     #'Effect ( Effect_Impact | Functional_Class | Codon_Change | Amino_Acid_Change|
