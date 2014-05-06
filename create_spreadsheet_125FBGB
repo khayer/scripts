@@ -280,6 +280,7 @@ File.open(vcf_file).each do |line|
   target_base = get_base(target_fields,fields)
   sheet1.row(i).push target_base
   if line =~ /EFF/
+    STDERR.puts line
     ###INFO=<ID=EFF,Number=.,Type=String,
     #Description="Predicted effects for this variant.Format:
     #'Effect ( Effect_Impact | Functional_Class | Codon_Change | Amino_Acid_Change|
