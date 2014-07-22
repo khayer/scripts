@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+require 'csv'
+require 'rsruby'
+
+usage =<<EOF
+      #{$0} panda.csv prepared_panda.csv
+EOF
+
+if ARGV.length != 2
+  puts usage
+  exit
+end
+
+# functions
+####################################################
+R = RSRuby.instance()
+R.eval_R("scaleData <- function(x) {
+  k = (x-min(x))/(max(x)-min(x))*100
+  k/100 * 90 + 5
+}")
+
+R.eval_R("scaleData2 <- function(x,min,max) {
+  k = (x-min)/(max-min)*100
+  k/100 * 90 + 5
+}")
+
+R.eval_R("avgData <- function(d) {
+  dd <- filter(d,rep(0.33,3))
+  dd[1] <- d[1]
+  dd[length(dd)] <- d[length(d)]
+  dd
+}")
+####################################################
+
+out = File.new(ARGV[1],"w")
+
+CSV.foreach(ARGV[0],  {:headers => :first_row}) do |row|
+  numbers = []
+  time_points = []
+  time_points2 = []
+  a_series = []
+  b_series = []
+  c_series = []
+  all_numbers = []
+  k = 1
+
+  %w{23 03 07 11 15 19}.each do |i|
+    #number = R.mean(numbers).to_i if i == "46"
+    number = (row["ZT#{i}A"].to_f + row["ZT#{i}B"].to_f + row["ZT#{i}C"].to_f) / 3 #if i != "46"
+    a_series << row["ZT#{i}A"].to_f
+    b_series << row["ZT#{i}B"].to_f
+    c_series << row["ZT#{i}C"].to_f
+    all_numbers << row["ZT#{i}A"].to_f
+    all_numbers << row["ZT#{i}B"].to_f
+    all_numbers << row["ZT#{i}C"].to_f
+    numbers << number
+    time_points << i
+    time_points2 << k.to_f
+    k += 1
+  end
+
+  max = all_numbers.max
+  min = all_numbers.min
+  mid = R.mean(all_numbers)
+
+  scaled = R.scaleData2(numbers,min,max).map {|e| e.to_i }
+  scaled_a = R.scaleData2(a_series,min,max).map {|e| e.to_i }
+  scaled_b = R.scaleData2(b_series,min,max).map {|e| e.to_i }
+  scaled_c = R.scaleData2(c_series,min,max).map {|e| e.to_i }
+  averaged = R.avgData(scaled).map {|e| e.to_i }
+  scaled_time = R.scaleData(time_points2).map {|e| e.to_i }
+  #cubase = "http://chart.apis.google.com/chart?chs=%sx%s&cht=lc&chxt=x,y&chxl=0:|23||||||03||||||07||||||11||||||15||||||19|||1:|#{min}|#{mid}|#{max}|&chxp=1,2,50,97&chxr=0,18,66&chls=0,0,0|2,1,0&chf=c,ls,0,CCCCCC,0.125,FFFFFF,0.25,CCCCCC,0.25,FFFFFF,0.25,CCCCCC,0.125&chd=t:#{scaled.join(",")}|#{averaged.join(",")}&chco=3164A6,FDB33A&chm=o,555555,0,-1,5"
+  #cubase2 = "https://chart.googleapis.com/chart?chs=500x225&chco=FDB33A&chc=corp&cht=lc&chd=t1:#{averaged.join(",")}%7C#{scaled_a.join(",")}%7C#{scaled_b.join(",")}%7C#{scaled_c.join(",")}&chm=F,000000,0,0:6,10&chxt=x,y&chxl=0:|#{time_points.join("|")}|1:%7C#{min.round(2)}%7C#{mid.round(2)}%7C#{max.round(2)}%7C&chxp=1,2,50,97&chxr=0,18,66&chf=c,ls,0,CCCCCC,0.125,FFFFFF,0.25,CCCCCC,0.25,FFFFFF,0.25,CCCCCC,0.125"
+  cubase = "https://chart.googleapis.com/chart?cht=s&chd=t:#{scaled_time.join(",")},#{scaled_time.join(",")},#{scaled_time.join(",")},#{scaled_time.join(",")}|#{scaled_a.join(",")},#{scaled_b.join(",")},#{scaled_c.join(",")},#{averaged.join(",")}&chxt=x,y&chs=%sx%s&chm=o,0000FF,0,-1,0,0|o,000000,0,0:#{3*time_points.length-1}:,5,0.1|D,FDB33A,1,#{3*time_points.length}:,1,1&chxl=0:|#{time_points.join("|")}|1:|#{min.round(2)}|#{mid.round(2)}|#{max.round(2)}|&chxp=0,#{scaled_time.join(',')}|1,2,50,97&chf=c,ls,0,CCCCCC,0.092,FFFFFF,0.541,CCCCCC,0.541"
+  out.puts "#{row["probeset_id"]}@#{time_points.join(",")},#{time_points.join(",")},#{time_points.join(",")}@#{a_series.join(",")},#{b_series.join(",")},#{c_series.join(",")}@#{cubase}"
+
+
+end
