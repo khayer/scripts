@@ -16,7 +16,7 @@ usage =<<EOF
       * wik      :: number of wik
       * phast    :: phast cons score
       * homo     :: homozygosity score
-      * [sib]       :: number of sibling
+      * [sib]    :: number of sibling
       ------------------------------------------------------
 
       - VERSION 7/22/2014 (105FEGG) -------------------------
