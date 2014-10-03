@@ -44,7 +44,11 @@ CSV.open(ARGV[1], "wb") do |csv|
     puts gene_symbol = dummy_gene_assignement[1]
     chromosomal_location = "-"
     unigene_cluster_type = "-"
-    ensembl = "-"
+    out = []
+    #puts row.to_a.join("EUNJI")
+    row.to_a.flatten.map {|e| e.split("gene:")[1..-1]}.each {|e| e.map {|k| out << k.split(" ")[0] } if e}
+    ensembl = out.join(" /// ")
+    ensembl = "-" if ensembl == ""
     entrez_gene = dummy_gene_assignement[4]
     swissprot = row["swissprot"]
     ec = "-"
