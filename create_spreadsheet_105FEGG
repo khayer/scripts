@@ -19,7 +19,7 @@ usage =<<EOF
       * [sib]    :: number of sibling
       ------------------------------------------------------
 
-      - VERSION 7/22/2014 (105FEGG) -------------------------
+      - VERSION 2/05/2015 (105FEGG) -------------------------
 
       ------------------------------------------------------
 
@@ -291,7 +291,8 @@ File.open(vcf_file).each do |line|
     snp_eff = info.split("EFF=")[1].split(",")
     snp_eff.keep_if {|k| k =~ /(HIGH|MODERATE)/}
     #puts snp_eff
-    effect,impact,functional_class,codon_change,aa_change,aa_length,gene_name,transcript_bio_type,gene_coding,snpeff_transcript_id,exon_rank,genotype_number= snp_eff[0].split(/[|()]/)
+    #effect,impact,functional_class,codon_change,aa_change,aa_length,gene_name,transcript_bio_type,gene_coding,snpeff_transcript_id,exon_rank,genotype_number= snp_eff[0].split(/[|()]/)
+    effect,impact,functional_class,codon_change,aa_change,gene_name,transcript_bio_type,gene_coding,snpeff_transcript_id,exon_rank,genotype_number= snp_eff[0].split(/[|()]/)
     #impact = info.split("SNPEFF_IMPACT=")[-1].split(";")[0]
     #gene_name = info.split("SNPEFF_GENE_NAME=")[-1].split(";")[0].gsub(/Multi/,"(x of x)")
     #effect = info.split("SNPEFF_EFFECT=")[-1].split(";")[0]
@@ -303,8 +304,8 @@ File.open(vcf_file).each do |line|
     else
       link_transcript_id = make_link_refSeq(snpeff_transcript_id)
     end
-    codon_change = "n/a"
-    amino_change = "n/a"
+    codon_change ||= "n/a"
+    amino_change ||= "n/a"
     if effect == "NON_SYNONYMOUS_CODING"
       #codon_change = info.split("SNPEFF_CODON_CHANGE=")[-1].split(";")[0]
       codons = codon_change.split("/")
